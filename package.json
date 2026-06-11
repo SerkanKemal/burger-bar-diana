@@ -6,13 +6,22 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "optimize:images": "node scripts/optimize-images.js",
+    "db:init": "node scripts/init-db.js",
+    "email:test": "node scripts/test-email.js"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.5.2",
+    "mysql2": "^3.22.5",
+    "nodemailer": "^8.0.11"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.1"
   }
 }

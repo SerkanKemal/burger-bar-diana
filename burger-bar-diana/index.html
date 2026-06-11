@@ -9,8 +9,9 @@
   <meta property="og:locale" content="bg_BG" />
   <meta property="og:title" content="Burger Bar & Bagel Diana | Балчик" />
   <meta property="og:description" content="Бургери, багели и свежи напитки в сърцето на Балчик." />
-  <meta property="og:image" content="images/food-collage.png" />
+  <meta property="og:image" content="images/food-collage.webp" />
   <title>Burger Bar & Bagel Diana | Балчик</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
@@ -22,8 +23,7 @@
 
   <header class="header" id="top">
     <a class="logo" href="#top" aria-label="Начало">
-      <span class="logo-mark">D</span>
-      <span>Burger Bar <i>&</i> Bagel</span>
+      <img src="images/brand-logo.svg" alt="Burger Bar & Bagel Diana" />
     </a>
     <nav class="nav" id="mainNav" aria-label="Основна навигация">
       <a href="#about">За нас</a>
@@ -32,7 +32,10 @@
       <a href="#reviews">Отзиви</a>
       <a href="#contact">Контакти</a>
     </nav>
-    <a class="nav-cta" href="tel:+359895265217">Обади се</a>
+    <div class="header-actions">
+      <button class="account-button" id="openAccount" type="button" aria-controls="accountDrawer" aria-expanded="false">Профил <strong id="notificationCount" hidden>0</strong></button>
+      <a class="nav-cta" href="tel:+359895265217">Обади се</a>
+    </div>
     <button class="menu-toggle" aria-label="Отвори меню" aria-expanded="false" aria-controls="mainNav"><span></span><span></span></button>
   </header>
 
@@ -52,31 +55,31 @@
           <a class="button ghost" href="https://www.google.com/maps/search/?api=1&query=%D1%83%D0%BB.+%D0%A7%D0%B5%D1%80%D0%BD%D0%BE+%D0%9C%D0%BE%D1%80%D0%B5+1+%D0%91%D0%B0%D0%BB%D1%87%D0%B8%D0%BA" target="_blank" rel="noopener">Упътвания</a>
         </div>
         <div class="hero-meta reveal">
-          <div><small>Днес</small><strong>Отворено до 23:00</strong></div>
-          <div><small>Цена</small><strong>5 – 10 € на човек</strong></div>
+          <div><small>Работно време</small><strong>Провери по телефона</strong></div>
+          <div><small>Бургери</small><strong>12,80 – 18,80 лв.</strong></div>
           <div><small>Услуги</small><strong>На място · За вкъщи</strong></div>
         </div>
       </div>
 
       <div class="hero-visual reveal-scale">
         <div class="image-card image-main tilt" data-parallax="0.05">
-          <img src="images/food-collage.png" alt="Поднесени бургери, пържени картофи и напитка" />
-          <span class="image-label">Real food. Real place.</span>
+          <img src="images/food-collage.webp" alt="Поднесени бургери, пържени картофи и напитка" fetchpriority="high" decoding="async" />
+          <span class="image-label">Истинска храна. Истинско място.</span>
         </div>
         <div class="image-card image-secondary tilt">
-          <img src="images/prep-collage.png" alt="Приготвяне на бургер и картофки в кухнята" />
+          <img src="images/prep-collage.webp" alt="Приготвяне на бургер и картофки в кухнята" decoding="async" />
           <span class="mini-label">Прясно приготвено</span>
         </div>
         <div class="floating-badge"><strong data-google-rating>5.0</strong><span>★★★★★</span><small>Google рейтинг</small></div>
         <div class="spin-text" aria-hidden="true"><svg viewBox="0 0 120 120"><defs><path id="circle" d="M60,60 m-42,0 a42,42 0 1,1 84,0 a42,42 0 1,1 -84,0"/></defs><text><textPath href="#circle">BURGER • BAGEL • DIANA • </textPath></text></svg><span>🍔</span></div>
       </div>
-      <a href="#about" class="scroll-hint">SCROLL <span>↓</span></a>
+      <a href="#about" class="scroll-hint">НАДОЛУ <span>↓</span></a>
     </section>
 
     <section class="ticker" aria-label="Акценти">
       <div class="ticker-track">
-        <span>HANDCRAFTED BURGERS</span><i>✦</i><span>FRESH BAGELS</span><i>✦</i><span>HOMEMADE DRINKS</span><i>✦</i><span>GARDEN VIBES</span><i>✦</i>
-        <span>HANDCRAFTED BURGERS</span><i>✦</i><span>FRESH BAGELS</span><i>✦</i><span>HOMEMADE DRINKS</span><i>✦</i><span>GARDEN VIBES</span><i>✦</i>
+        <span>РЪЧНО ПРИГОТВЕНИ БУРГЕРИ</span><i>✦</i><span>СВЕЖИ БАГЕЛИ</span><i>✦</i><span>ОСВЕЖАВАЩИ НАПИТКИ</span><i>✦</i><span>ГРАДИНСКА АТМОСФЕРА</span><i>✦</i>
+        <span>РЪЧНО ПРИГОТВЕНИ БУРГЕРИ</span><i>✦</i><span>СВЕЖИ БАГЕЛИ</span><i>✦</i><span>ОСВЕЖАВАЩИ НАПИТКИ</span><i>✦</i><span>ГРАДИНСКА АТМОСФЕРА</span><i>✦</i>
       </div>
     </section>
 
@@ -87,7 +90,7 @@
       </div>
       <div class="about-grid">
         <div class="about-image reveal-scale">
-          <img src="images/owner-diana.png" alt="Интериорът и кухнята на Burger Bar & Bagel Diana" loading="lazy" decoding="async" />
+          <img src="images/owner-diana.webp" alt="Интериорът и кухнята на Burger Bar & Bagel Diana" loading="lazy" decoding="async" />
           <span class="corner corner-tl"></span><span class="corner corner-br"></span>
           <div class="owner-chip">Прясно приготвено</div>
         </div>
@@ -101,7 +104,7 @@
           </div>
           <div class="stats">
             <div><strong data-count="118" data-google-count>0</strong><span>Google оценки</span></div>
-            <div><strong data-count="23">0</strong><span>часа вкус и настроение</span></div>
+            <div><strong data-count="15">0</strong><span>предложения в менюто</span></div>
           </div>
         </div>
       </div>
@@ -124,96 +127,96 @@
       <div class="product-heading hidden" data-section-category="drinks">
         <span class="kicker">Студени напитки</span>
         <h3>Нещо освежаващо</h3>
-        <p>Цените и наличностите могат да бъдат потвърдени при приемане на поръчката.</p>
+        <p>Цените на напитките са ориентировъчни и се потвърждават при приемане на поръчката.</p>
       </div>
       <div class="product-grid">
         <article class="menu-card product-card reveal" data-category="burgers" data-id="classic-burger" data-name="Класически бургер" data-price="14.60">
-          <div class="product-img"><img src="images/burgers/classic-burger.png" alt="Класически бургер" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/classic-burger.webp" alt="Класически бургер" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Телешко</span><h3>Класически бургер</h3></div><strong>14,60 лв.</strong></div>
           <p>Телешко, маруля, чедър, домат и специален бургер сос.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="egg-rocket-burger" data-name="Класически с яйце и рукола" data-price="14.60">
-          <div class="product-img"><img src="images/burgers/egg-rocket-burger.png" alt="Класически бургер с яйце и рукола" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/egg-rocket-burger.webp" alt="Класически бургер с яйце и рукола" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Телешко</span><h3>Класически с яйце и рукола</h3></div><strong>14,60 лв.</strong></div>
           <p>Телешко, маруля, чедър, яйце, рукола, домат и бургер сос.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="double-classic-burger" data-name="Двоен класически" data-price="18.80">
-          <div class="product-img"><img src="images/burgers/double-classic-burger.png" alt="Двоен класически бургер" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/double-classic-burger.webp" alt="Двоен класически бургер" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Двойно телешко</span><h3>Двоен класически</h3></div><strong>18,80 лв.</strong></div>
           <p>Двойно телешко, двоен чедър и бекон.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="veggie-burger" data-name="Веге бургер" data-price="12.80">
-          <div class="product-img"><img src="images/burgers/veggie-burger.png" alt="Вегетариански бургер" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/veggie-burger.webp" alt="Вегетариански бургер" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Вегетариански</span><h3>Веге бургер</h3></div><strong>12,80 лв.</strong></div>
           <p>Кюфте от червена леща, пържено яйце, ананас, чедър и рукола.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="torpedo-shrimp-burger" data-name="Торпедо скариди" data-price="16.90">
-          <div class="product-img"><img src="images/burgers/torpedo-shrimp-burger.png" alt="Бургер с торпедо скариди" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/torpedo-shrimp-burger.webp" alt="Бургер с торпедо скариди" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Морски</span><h3>Торпедо скариди</h3></div><strong>16,90 лв.</strong></div>
           <p>Лучени кръгчета, тартар сос, домат и маруля.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="mexico-burger" data-name="Мексико" data-price="15.40">
-          <div class="product-img"><img src="images/burgers/mexico-burger.png" alt="Мексикански бургер" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/mexico-burger.webp" alt="Мексикански бургер" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Лютив</span><h3>Мексико</h3></div><strong>15,40 лв.</strong></div>
           <p>Черно хлебче, телешко, гуакамоле, лют сос, домат, кориандър, чедър и маринован лук.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="king-prawn-burger" data-name="Beef &amp; King Prawn" data-price="18.80">
-          <div class="product-img"><img src="images/burgers/king-prawn-burger.png" alt="Телешки бургер с кралски скариди" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/king-prawn-burger.webp" alt="Телешки бургер с кралски скариди" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Телешко и скариди</span><h3>Beef &amp; King Prawn</h3></div><strong>18,80 лв.</strong></div>
           <p>Телешко с кралски скариди, салата и сос „1000 острова“.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="trio-classic-burger" data-name="Трио класик" data-price="14.60">
-          <div class="product-img"><img src="images/burgers/trio-classic-burger.png" alt="Трио класически мини бургери" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/trio-classic-burger.webp" alt="Трио класически мини бургери" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>За споделяне</span><h3>Трио класик</h3></div><strong>14,60 лв.</strong></div>
           <p>Три класически мини бургера с пържени картофки.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="crispy-chicken-burger" data-name="Crispy Chicken" data-price="12.80">
-          <div class="product-img"><img src="images/burgers/crispy-chicken-burger.png" alt="Хрупкав пилешки бургер" loading="lazy" decoding="async"></div>
+          <div class="product-img"><img src="images/burgers/crispy-chicken-burger.webp" alt="Хрупкав пилешки бургер" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Пилешко</span><h3>Crispy Chicken</h3></div><strong>12,80 лв.</strong></div>
           <p>Хрупкаво пиле, чедър, маруля и уасаби майонеза.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card drink-card hidden" data-category="drinks" data-id="coca-cola" data-name="Coca-Cola" data-price="3.00">
           <div class="drink-visual coca-cola" aria-hidden="true"><span>Coca-Cola</span></div>
-          <div class="menu-info"><div><span>Газирана напитка</span><h3>Coca-Cola</h3></div><strong>3,00 лв.</strong></div>
+          <div class="menu-info"><div><span>Газирана напитка</span><h3>Coca-Cola</h3></div><strong>≈ 3,00 лв.</strong></div>
           <p>Оригинален вкус, сервиран добре охладен.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card drink-card hidden" data-category="drinks" data-id="fanta-orange" data-name="Fanta Orange" data-price="3.00">
           <div class="drink-visual fanta" aria-hidden="true"><span>Fanta</span></div>
-          <div class="menu-info"><div><span>Газирана напитка</span><h3>Fanta Orange</h3></div><strong>3,00 лв.</strong></div>
+          <div class="menu-info"><div><span>Газирана напитка</span><h3>Fanta Orange</h3></div><strong>≈ 3,00 лв.</strong></div>
           <p>Плодов портокалов вкус, сервиран добре охладен.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card drink-card hidden" data-category="drinks" data-id="pepsi" data-name="Pepsi" data-price="3.00">
           <div class="drink-visual pepsi" aria-hidden="true"><span>Pepsi</span></div>
-          <div class="menu-info"><div><span>Газирана напитка</span><h3>Pepsi</h3></div><strong>3,00 лв.</strong></div>
+          <div class="menu-info"><div><span>Газирана напитка</span><h3>Pepsi</h3></div><strong>≈ 3,00 лв.</strong></div>
           <p>Класическа кола за свежо допълнение към бургера.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card drink-card hidden" data-category="drinks" data-id="sprite" data-name="Sprite" data-price="3.00">
           <div class="drink-visual sprite" aria-hidden="true"><span>Sprite</span></div>
-          <div class="menu-info"><div><span>Газирана напитка</span><h3>Sprite</h3></div><strong>3,00 лв.</strong></div>
+          <div class="menu-info"><div><span>Газирана напитка</span><h3>Sprite</h3></div><strong>≈ 3,00 лв.</strong></div>
           <p>Свеж лимоново-лайм вкус, сервиран добре охладен.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card drink-card hidden" data-category="drinks" data-id="schweppes" data-name="Schweppes" data-price="3.50">
           <div class="drink-visual schweppes" aria-hidden="true"><span>Schweppes</span></div>
-          <div class="menu-info"><div><span>Газирана напитка</span><h3>Schweppes</h3></div><strong>3,50 лв.</strong></div>
+          <div class="menu-info"><div><span>Газирана напитка</span><h3>Schweppes</h3></div><strong>≈ 3,50 лв.</strong></div>
           <p>Освежаваща газирана напитка с характерен вкус.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
         <article class="menu-card product-card drink-card hidden" data-category="drinks" data-id="mineral-water" data-name="Минерална вода" data-price="2.00">
-          <div class="drink-visual water" aria-hidden="true"><span>Water</span></div>
-          <div class="menu-info"><div><span>Вода</span><h3>Минерална вода</h3></div><strong>2,00 лв.</strong></div>
+          <div class="drink-visual water" aria-hidden="true"><span>Вода</span></div>
+          <div class="menu-info"><div><span>Вода</span><h3>Минерална вода</h3></div><strong>≈ 2,00 лв.</strong></div>
           <p>Негазирана или газирана минерална вода.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
@@ -225,7 +228,7 @@
       <div class="experience-content reveal">
         <span class="kicker light">03 · Атмосфера</span>
         <blockquote>„Уникално местенце<br>с много красива градина.“</blockquote>
-        <p>— Hristo Dzhenkov, Google review</p>
+        <p>— Hristo Dzhenkov, отзив в Google</p>
       </div>
     </section>
 
@@ -236,19 +239,19 @@
       </div>
       <div class="gallery-grid">
         <button class="gallery-card large reveal-scale" data-lightbox>
-          <img src="images/food-collage.png" alt="Готови бургери и картофи" loading="lazy" decoding="async" />
+          <img src="images/food-collage.webp" alt="Готови бургери и картофи" loading="lazy" decoding="async" />
           <span>Поднесени вкусове</span>
         </button>
         <button class="gallery-card reveal-scale" data-lightbox>
-          <img src="images/prep-collage.png" alt="Приготвяне на бургер в кухнята" loading="lazy" decoding="async" />
+          <img src="images/prep-collage.webp" alt="Приготвяне на бургер в кухнята" loading="lazy" decoding="async" />
           <span>От кухнята</span>
         </button>
         <button class="gallery-card reveal-scale" data-lightbox>
-          <img src="images/signboard.png" alt="Табела пред заведението" loading="lazy" decoding="async" />
+          <img src="images/signboard.webp" alt="Табела пред заведението" loading="lazy" decoding="async" />
           <span>Пред входа</span>
         </button>
         <button class="gallery-card tall reveal-scale" data-lightbox>
-          <img src="images/owner-diana.png" alt="Кухнята на заведението" loading="lazy" decoding="async" />
+          <img src="images/owner-diana.webp" alt="Кухнята на заведението" loading="lazy" decoding="async" />
           <span>От кухнята</span>
         </button>
       </div>
@@ -260,7 +263,7 @@
         <h2><span data-google-count>118</span> причини<br><em>да ни посетиш.</em></h2>
       </div>
       <div class="review-shell reveal">
-        <div class="review-score"><strong data-google-rating>5.0</strong><span>★★★★★</span><small>Google Reviews</small></div>
+        <div class="review-score"><strong data-google-rating>5.0</strong><span>★★★★★</span><small>Google отзиви</small></div>
         <div class="review-slider">
           <article class="review active"><p>„Ако желаете разнообразие в иначе морско насочената храна в Балчик, защо не изпробвате бургерите тук :)“</p><footer><strong>Иван Русев</strong><span>преди 8 месеца</span></footer></article>
           <article class="review"><p>„Уникално местенце с много красива градина. Опитахме бургери, багели и безалкохолни коктейли — определено ще го посещаваме многократно.“</p><footer><strong>Hristo Dzhenkov</strong><span>преди 9 месеца</span></footer></article>
@@ -279,13 +282,13 @@
           <div class="contact-details">
             <a href="https://www.google.com/maps/search/?api=1&query=%D1%83%D0%BB.+%D0%A7%D0%B5%D1%80%D0%BD%D0%BE+%D0%9C%D0%BE%D1%80%D0%B5+1+%D0%91%D0%B0%D0%BB%D1%87%D0%B8%D0%BA" target="_blank" rel="noopener"><small>Адрес</small><strong>Център, ул. „Черно море“ 1, 9600 Балчик</strong><span>↗</span></a>
             <a href="tel:+359895265217"><small>Телефон</small><strong>089 526 5217</strong><span>↗</span></a>
-            <div><small>Работно време</small><strong>Отворено · Затваря в 23:00 ч.</strong></div>
+            <div><small>Работно време</small><strong>Потвърди по телефона преди посещение</strong></div>
           </div>
         </div>
         <div class="contact-art">
-          <img src="images/signboard.png" alt="Табела на заведението" loading="lazy" decoding="async" />
+          <img src="images/signboard.webp" alt="Табела на заведението" loading="lazy" decoding="async" />
           <div class="contact-overlay"></div>
-          <div class="contact-sticker">Takeaway • Dine in</div>
+          <div class="contact-sticker">За вкъщи • На място</div>
           <div class="big-type">DIANA</div>
         </div>
       </div>
@@ -293,7 +296,7 @@
   </main>
 
   <footer class="footer">
-    <a class="logo footer-logo" href="#top"><span class="logo-mark">D</span><span>Burger Bar <i>&</i> Bagel</span></a>
+    <a class="logo footer-logo" href="#top" aria-label="Burger Bar & Bagel Diana"><img src="images/brand-logo.svg" alt="" /></a>
     <p>Добра храна. Добри хора. Добро място.</p>
     <a href="#top">Нагоре ↑</a>
     <small>© <span id="year"></span> Burger Bar &amp; Bagel Diana</small>
@@ -303,6 +306,53 @@
     <span>Количка</span>
     <strong id="cartCount" aria-label="0 продукта" aria-live="polite">0</strong>
   </button>
+
+  <div class="account-backdrop" id="accountBackdrop" hidden></div>
+  <aside class="account-drawer" id="accountDrawer" aria-labelledby="accountTitle" aria-hidden="true" inert>
+    <div class="account-header">
+      <div><span class="kicker">Твоето място</span><h2 id="accountTitle">Профил</h2></div>
+      <button class="account-close" id="closeAccount" type="button" aria-label="Затвори профила">×</button>
+    </div>
+    <div id="guestAccount">
+      <div class="auth-tabs" role="group" aria-label="Вход или регистрация">
+        <button class="active" type="button" data-auth-view="login">Вход</button>
+        <button type="button" data-auth-view="register">Регистрация</button>
+      </div>
+      <form class="account-form" id="loginForm">
+        <label>Имейл<input name="email" type="email" autocomplete="email" required></label>
+        <label>Парола<input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Влез</button>
+      </form>
+      <form class="account-form" id="registerForm" hidden>
+        <label>Име<input name="name" autocomplete="name" required></label>
+        <label>Имейл<input name="email" type="email" autocomplete="email" required></label>
+        <label>Телефон<input name="phone" type="tel" autocomplete="tel" required></label>
+        <label>Парола<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+        <button type="submit">Създай профил</button>
+      </form>
+      <p class="account-message" id="authMessage" aria-live="polite"></p>
+    </div>
+    <div id="userAccount" hidden>
+      <form class="account-form" id="profileForm">
+        <h3>Моите данни</h3>
+        <label>Име<input name="name" autocomplete="name" required></label>
+        <label>Имейл<input name="email" type="email" disabled></label>
+        <label>Телефон<input name="phone" type="tel" autocomplete="tel" required></label>
+        <label>Адрес по подразбиране<input name="defaultAddress" autocomplete="street-address"></label>
+        <button type="submit">Запази профила</button>
+        <button class="logout-button" id="logoutButton" type="button">Изход</button>
+      </form>
+      <section class="profile-section">
+        <div><h3>Известия</h3><button id="markNotificationsRead" type="button">Маркирай като прочетени</button></div>
+        <div id="profileNotifications"><p>Няма известия.</p></div>
+      </section>
+      <section class="profile-section">
+        <h3>История на поръчките</h3>
+        <div id="profileOrders"><p>Няма поръчки.</p></div>
+      </section>
+      <p class="account-message" id="profileMessage" aria-live="polite"></p>
+    </div>
+  </aside>
 
   <div class="cart-backdrop" id="cartBackdrop" hidden></div>
   <aside class="cart-drawer" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true" inert>
@@ -314,17 +364,33 @@
       <p class="cart-empty">Количката е празна. Добави нещо вкусно от менюто.</p>
     </div>
     <div class="cart-summary">
-      <span>Общо</span>
+      <span>Ориентировъчно общо</span>
       <strong id="cartTotal">0,00 лв.</strong>
     </div>
     <form class="order-form" id="orderForm">
       <h3>Данни за поръчката</h3>
+      <fieldset class="fulfillment-options">
+        <legend>Получаване</legend>
+        <label><input type="radio" name="fulfillmentType" value="pickup" checked> Вземане от място</label>
+        <label><input type="radio" name="fulfillmentType" value="delivery"> Доставка</label>
+      </fieldset>
+      <label>Желан час<input id="requestedTime" name="requestedTime" type="time"></label>
+      <label id="deliveryAddressLabel" hidden>Адрес за доставка<input id="deliveryAddress" name="address" autocomplete="street-address"></label>
       <label>Име<input id="customerName" name="name" autocomplete="name" required></label>
+      <label>Имейл за потвърждение<input id="customerEmail" name="email" type="email" autocomplete="email" required></label>
       <label>Телефон<input id="customerPhone" name="phone" type="tel" autocomplete="tel" required></label>
       <label>Бележка<textarea id="orderNote" name="note" rows="3" placeholder="Например: без лук"></textarea></label>
-      <p>Поръчката се подготвя като SMS и влиза в сила след потвърждение от заведението.</p>
-      <button class="order-submit" type="submit">Изпрати поръчката чрез SMS</button>
+      <p>Поръчката ще бъде записана и влиза в сила след потвърждение от заведението.</p>
+      <p class="order-message" id="orderMessage" aria-live="polite"></p>
+      <button class="order-submit" type="submit">Изпрати поръчката</button>
       <a class="order-call" href="tel:+359895265217">Или се обади: 089 526 5217</a>
+    </form>
+    <form class="track-order-form" id="trackOrderForm">
+      <h3>Провери поръчка</h3>
+      <label>Номер на поръчката<input id="trackOrderNumber" required placeholder="DIA-..."></label>
+      <label>Телефон<input id="trackOrderPhone" type="tel" required></label>
+      <button type="submit">Провери статуса</button>
+      <p id="trackOrderResult" aria-live="polite"></p>
     </form>
   </aside>
 
@@ -342,7 +408,7 @@
       "@type": "Restaurant",
       "name": "Burger Bar & Bagel Diana",
       "telephone": "+359895265217",
-      "priceRange": "€5–10",
+      "priceRange": "12.80–18.80 BGN",
       "servesCuisine": ["Burgers", "Bagels"],
       "address": {
         "@type": "PostalAddress",
@@ -354,5 +420,6 @@
     }
   </script>
   <script src="script.js"></script>
+  <script src="account.js"></script>
 </body>
 </html>

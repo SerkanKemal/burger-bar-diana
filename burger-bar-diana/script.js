@@ -220,6 +220,11 @@ const cartItems=$('#cartItems');
 const cartCount=$('#cartCount');
 const cartTotal=$('#cartTotal');
 const orderForm=$('#orderForm');
+const orderMessage=$('#orderMessage');
+const deliveryAddressLabel=$('#deliveryAddressLabel');
+const deliveryAddress=$('#deliveryAddress');
+const trackOrderForm=$('#trackOrderForm');
+const trackOrderResult=$('#trackOrderResult');
 let cart=[];
 
 try{
@@ -331,23 +336,86 @@ openCartButton.addEventListener('click',openCart);
 closeCartButton.addEventListener('click',closeCart);
 cartBackdrop.addEventListener('click',closeCart);
 
-orderForm.addEventListener('submit',event=>{
+$$('input[name="fulfillmentType"]').forEach(input=>input.addEventListener('change',()=>{
+  const isDelivery=input.value==='delivery'&&input.checked;
+  if(!isDelivery&&input.checked){
+    deliveryAddressLabel.hidden=true;
+    deliveryAddress.required=false;
+  }
+  if(isDelivery){
+    deliveryAddressLabel.hidden=false;
+    deliveryAddress.required=true;
+  }
+}));
+
+const statusLabels={
+  received:'Получена',
+  confirmed:'Потвърдена',
+  preparing:'Приготвя се',
+  ready:'Готова',
+  completed:'Приключена',
+  cancelled:'Отказана'
+};
+
+orderForm.addEventListener('submit',async event=>{
   event.preventDefault();
   if(!cart.length) return;
+  const submitButton=orderForm.querySelector('.order-submit');
   const name=$('#customerName').value.trim();
+  const email=$('#customerEmail').value.trim();
   const phone=$('#customerPhone').value.trim();
   const note=$('#orderNote').value.trim();
-  const lines=cart.map(item=>`${item.quantity} x ${item.name} - ${formatPrice(item.price*item.quantity)}`);
-  const total=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
-  const message=[
-    'Здравейте, искам да направя поръчка:',
-    ...lines,
-    `Общо: ${formatPrice(total)}`,
-    `Име: ${name}`,
-    `Телефон: ${phone}`,
-    note?`Бележка: ${note}`:''
-  ].filter(Boolean).join('\n');
-  window.location.href=`sms:+359895265217?body=${encodeURIComponent(message)}`;
+  const fulfillmentType=$('input[name="fulfillmentType"]:checked').value;
+  orderMessage.textContent='Записваме поръчката...';
+  submitButton.disabled=true;
+
+  try{
+    const response=await fetch('/api/orders',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name,
+        email,
+        phone,
+        note,
+        fulfillmentType,
+        address:deliveryAddress.value.trim(),
+        requestedTime:$('#requestedTime').value,
+        items:cart.map(item=>({id:item.id,quantity:item.quantity}))
+      })
+    });
+    const result=await response.json();
+    if(!response.ok) throw new Error(result.error||'Поръчката не може да бъде записана.');
+
+    orderMessage.textContent=`Поръчката е записана! Номер: ${result.orderNumber}. ${result.emailSent?'Изпратихме потвърждение по имейл.':'Потвърждението по имейл не беше изпратено.'}`;
+    $('#trackOrderNumber').value=result.orderNumber;
+    $('#trackOrderPhone').value=phone;
+    cart=[];
+    renderCart();
+    orderForm.reset();
+    deliveryAddressLabel.hidden=true;
+    deliveryAddress.required=false;
+  }catch(error){
+    orderMessage.textContent=error.message;
+  }finally{
+    submitButton.disabled=!cart.length;
+  }
+});
+
+trackOrderForm.addEventListener('submit',async event=>{
+  event.preventDefault();
+  trackOrderResult.textContent='Проверяваме...';
+  const orderNumber=$('#trackOrderNumber').value.trim();
+  const phone=$('#trackOrderPhone').value.trim();
+  try{
+    const response=await fetch(`/api/orders/${encodeURIComponent(orderNumber)}?phone=${encodeURIComponent(phone)}`);
+    const result=await response.json();
+    if(!response.ok) throw new Error(result.error||'Поръчката не е намерена.');
+    const method=result.fulfillment_type==='delivery'?'Доставка':'Вземане от място';
+    trackOrderResult.textContent=`${statusLabels[result.status]||result.status} · ${method} · ${formatPrice(Number(result.total))}`;
+  }catch(error){
+    trackOrderResult.textContent=error.message;
+  }
 });
 
 window.addEventListener('keydown',event=>{

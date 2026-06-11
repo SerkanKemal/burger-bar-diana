@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Управление на поръчки | Burger Bar Diana</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <img src="images/brand-logo.svg" alt="Burger Bar & Bagel Diana">
+    <div><h1>Управление на поръчки</h1><a href="/">Към сайта</a></div>
+  </header>
+  <main>
+    <form id="adminLogin">
+      <label>Администраторски токен<input id="adminToken" type="password" required></label>
+      <button type="submit">Зареди поръчките</button>
+    </form>
+    <div class="admin-actions">
+      <div>
+        <p id="adminMessage" aria-live="polite">Въведи токена от `ADMIN_TOKEN`.</p>
+        <small id="refreshCountdown">Автоматичното обновяване ще започне след вход.</small>
+      </div>
+      <button id="refreshOrders" type="button">Обнови</button>
+    </div>
+    <section id="adminOrders" class="orders-grid"></section>
+  </main>
+  <script src="admin.js"></script>
+</body>
+</html>

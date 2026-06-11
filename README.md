@@ -10,6 +10,80 @@ npm run dev
 
 След това отвори `http://localhost:3000`.
 
+## MySQL и реални поръчки
+
+Проектът записва поръчките в MySQL. Копирай `.env.example` като `.env` и попълни реалните данни:
+
+```env
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=твоята_mysql_парола
+DB_NAME=burger_bar_diana
+ADMIN_TOKEN=дълъг_случаен_таен_токен
+```
+
+Създай базата и таблиците:
+
+```powershell
+npm run db:init
+```
+
+След това стартирай:
+
+```powershell
+npm run dev
+```
+
+- Клиентите изпращат и проверяват поръчките през количката.
+- Управлението е на `http://localhost:3000/admin.html`.
+- В администраторската страница въведи стойността на `ADMIN_TOKEN`.
+- Бутонът **Профил** позволява регистрация, вход и редакция на клиентските данни.
+- Поръчките, направени след вход, се пазят в историята на профила.
+- При промяна на статуса се създава известие в клиентския профил.
+- Известията в тази версия са вътрешни за сайта. Имейл и SMS известия изискват отделен доставчик.
+
+## Имейли при регистрация и поръчка
+
+Добави SMTP настройките в `.env`. Пример с Gmail:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_16_character_app_password
+EMAIL_FROM=Burger Bar Diana <your_email@gmail.com>
+```
+
+За Gmail активирай **2-Step Verification**, след което създай **App Password** за сайта. Не използвай обикновената парола на Google профила. След промяна на `.env` рестартирай сървъра.
+
+Провери конфигурацията на:
+
+```text
+http://localhost:3000/api/health
+```
+
+Полето `email` трябва да бъде `configured`.
+
+Изпрати пробен приветствен имейл:
+
+```powershell
+npm run email:test
+```
+
+За публичния Render сайт е необходима публично достъпна MySQL база. Локалната MySQL база на компютъра не е достъпна от Render. В Render добави `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` и `ADMIN_TOKEN` като Environment Variables.
+
+## Оптимизиране на изображенията
+
+Оригиналните PNG файлове се пазят като източник, а сайтът зарежда по-малките WebP версии. След добавяне или смяна на PNG снимка изпълни:
+
+```powershell
+npm run optimize:images
+```
+
+След това провери и публикувай новите WebP файлове.
+
 ## Автоматични Google отзиви
 
 1. Създай проект в [Google Cloud Console](https://console.cloud.google.com/).
