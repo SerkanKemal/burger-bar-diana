@@ -9,6 +9,7 @@
     "dev": "node --watch server.js",
     "optimize:images": "node scripts/optimize-images.js",
     "db:init": "node scripts/init-db.js",
+    "admin:promote": "node scripts/promote-admin.js",
     "email:test": "node scripts/test-email.js"
   },
   "engines": {

@@ -1,6 +1,7 @@
 const ordersContainer=document.querySelector('#adminOrders');
 const message=document.querySelector('#adminMessage');
-const tokenInput=document.querySelector('#adminToken');
+const loginForm=document.querySelector('#adminLogin');
+const logoutButton=document.querySelector('#adminLogout');
 const refreshCountdown=document.querySelector('#refreshCountdown');
 const refreshIntervalSeconds=60;
 const statusLabels={
@@ -11,16 +12,31 @@ const statusLabels={
   completed:'Приключена',
   cancelled:'Отказана'
 };
-let token=sessionStorage.getItem('diana-admin-token')||'';
 let secondsUntilRefresh=refreshIntervalSeconds;
 let isLoading=false;
 let authenticated=false;
-tokenInput.value=token;
 
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
 })[char]);
 const formatPrice=value=>`${Number(value).toFixed(2).replace('.',',')} лв.`;
+
+async function request(url,options={}){
+  const response=await fetch(url,{
+    ...options,
+    headers:{'Content-Type':'application/json',...(options.headers||{})}
+  });
+  const result=response.status===204?null:await response.json();
+  if(!response.ok) throw new Error(result?.error||'Възникна грешка.');
+  return result;
+}
+
+function setAuthenticated(value){
+  authenticated=value;
+  loginForm.hidden=value;
+  logoutButton.hidden=!value;
+  if(!value) ordersContainer.innerHTML='';
+}
 
 function renderOrders(orders){
   if(!orders.length){
@@ -48,50 +64,78 @@ function renderOrders(orders){
 }
 
 async function loadOrders(){
-  if(!token||isLoading) return;
+  if(!authenticated||isLoading) return;
   isLoading=true;
   message.textContent='Зареждаме поръчките...';
   try{
-    const response=await fetch('/api/admin/orders',{headers:{'x-admin-token':token}});
-    const result=await response.json();
-    if(response.status===401) authenticated=false;
-    if(!response.ok) throw new Error(result.error||'Поръчките не могат да бъдат заредени.');
-    authenticated=true;
+    const result=await request('/api/admin/orders');
     renderOrders(result.orders);
     message.textContent=`Заредени поръчки: ${result.orders.length}`;
     secondsUntilRefresh=refreshIntervalSeconds;
   }catch(error){
-    ordersContainer.innerHTML='';
+    setAuthenticated(false);
     message.textContent=error.message;
   }finally{
     isLoading=false;
   }
 }
 
-document.querySelector('#adminLogin').addEventListener('submit',event=>{
+async function checkAccess(){
+  try{
+    const result=await request('/api/me');
+    if(result.user?.role!=='admin') throw new Error('Влез с администраторския профил.');
+    setAuthenticated(true);
+    await loadOrders();
+  }catch(error){
+    setAuthenticated(false);
+    message.textContent=error.message;
+  }
+}
+
+loginForm.addEventListener('submit',async event=>{
   event.preventDefault();
-  token=tokenInput.value.trim();
-  authenticated=false;
-  sessionStorage.setItem('diana-admin-token',token);
-  loadOrders();
+  message.textContent='Влизаме...';
+  try{
+    const form=new FormData(loginForm);
+    const result=await request('/api/auth/login',{
+      method:'POST',
+      body:JSON.stringify(Object.fromEntries(form))
+    });
+    if(result.user.role!=='admin') throw new Error('Този профил няма администраторски достъп.');
+    loginForm.reset();
+    setAuthenticated(true);
+    await loadOrders();
+  }catch(error){
+    setAuthenticated(false);
+    message.textContent=error.message;
+  }
 });
+
+logoutButton.addEventListener('click',async()=>{
+  await request('/api/auth/logout',{method:'POST'});
+  setAuthenticated(false);
+  message.textContent='Излезе от администраторския профил.';
+});
+
 document.querySelector('#refreshOrders').addEventListener('click',loadOrders);
 ordersContainer.addEventListener('submit',async event=>{
   const form=event.target.closest('.status-form');
   if(!form) return;
   event.preventDefault();
-  const response=await fetch(`/api/admin/orders/${encodeURIComponent(form.dataset.orderNumber)}`,{
-    method:'PATCH',
-    headers:{'Content-Type':'application/json','x-admin-token':token},
-    body:JSON.stringify({status:form.querySelector('select').value})
-  });
-  const result=await response.json();
-  message.textContent=response.ok?`Статусът на ${result.orderNumber} е обновен.`:(result.error||'Грешка при обновяване.');
-  if(response.ok) loadOrders();
+  try{
+    const result=await request(`/api/admin/orders/${encodeURIComponent(form.dataset.orderNumber)}`,{
+      method:'PATCH',
+      body:JSON.stringify({status:form.querySelector('select').value})
+    });
+    message.textContent=`Статусът на ${result.orderNumber} е обновен.`;
+    await loadOrders();
+  }catch(error){
+    message.textContent=error.message;
+  }
 });
 
 setInterval(()=>{
-  if(!token||!authenticated){
+  if(!authenticated){
     refreshCountdown.textContent='Автоматичното обновяване ще започне след вход.';
     return;
   }
@@ -105,9 +149,7 @@ setInterval(()=>{
 },1000);
 
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden&&authenticated){
-    secondsUntilRefresh=0;
-  }
+  if(!document.hidden&&authenticated) secondsUntilRefresh=0;
 });
 
-if(token) loadOrders();
+checkAccess();

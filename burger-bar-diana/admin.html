@@ -18,15 +18,17 @@
   </header>
   <main>
     <form id="adminLogin">
-      <label>Администраторски токен<input id="adminToken" type="password" required></label>
-      <button type="submit">Зареди поръчките</button>
+      <label>Имейл<input name="email" type="email" autocomplete="email" required></label>
+      <label>Парола<input name="password" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Вход за администратор</button>
     </form>
     <div class="admin-actions">
       <div>
-        <p id="adminMessage" aria-live="polite">Въведи токена от `ADMIN_TOKEN`.</p>
+        <p id="adminMessage" aria-live="polite">Влез с администраторския профил.</p>
         <small id="refreshCountdown">Автоматичното обновяване ще започне след вход.</small>
       </div>
       <button id="refreshOrders" type="button">Обнови</button>
+      <button id="adminLogout" type="button" hidden>Изход</button>
     </div>
     <section id="adminOrders" class="orders-grid"></section>
   </main>

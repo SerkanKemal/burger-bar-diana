@@ -7,6 +7,7 @@ const userAccount=document.querySelector('#userAccount');
 const authMessage=document.querySelector('#authMessage');
 const profileMessage=document.querySelector('#profileMessage');
 const notificationCount=document.querySelector('#notificationCount');
+const adminProfileLink=document.querySelector('#adminProfileLink');
 const accountStatusLabels={received:'Получена',confirmed:'Потвърдена',preparing:'Приготвя се',ready:'Готова',completed:'Приключена',cancelled:'Отказана'};
 let currentUser=null;
 
@@ -50,6 +51,7 @@ function renderAccountState(user,unread=0){
   userAccount.hidden=!user;
   notificationCount.textContent=unread;
   notificationCount.hidden=!unread;
+  adminProfileLink.hidden=user?.role!=='admin';
   openAccountButton.childNodes[0].textContent=user?`${user.name} `:'Профил ';
   if(!user) return;
   const form=document.querySelector('#profileForm');

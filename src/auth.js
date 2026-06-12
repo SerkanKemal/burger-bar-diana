@@ -41,7 +41,7 @@ async function optionalAuth(req,res,next){
   if(!token) return next();
   try{
     const [users]=await pool.execute(
-      `SELECT u.id,u.name,u.email,u.phone,u.default_address
+      `SELECT u.id,u.name,u.email,u.phone,u.default_address,u.role
        FROM user_sessions s JOIN users u ON u.id=s.user_id
        WHERE s.token_hash=? AND s.expires_at>NOW() LIMIT 1`,
       [hashToken(token)]

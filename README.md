@@ -20,7 +20,6 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=твоята_mysql_парола
 DB_NAME=burger_bar_diana
-ADMIN_TOKEN=дълъг_случаен_таен_токен
 ```
 
 Създай базата и таблиците:
@@ -37,7 +36,8 @@ npm run dev
 
 - Клиентите изпращат и проверяват поръчките през количката.
 - Управлението е на `http://localhost:3000/admin.html`.
-- В администраторската страница въведи стойността на `ADMIN_TOKEN`.
+- Регистрирай профил и го направи администратор с `npm run admin:promote -- admin@example.com`.
+- Управлението на поръчките е на `http://localhost:3000/admin.html` и използва нормалния вход в профила.
 - Бутонът **Профил** позволява регистрация, вход и редакция на клиентските данни.
 - Поръчките, направени след вход, се пазят в историята на профила.
 - При промяна на статуса се създава известие в клиентския профил.
@@ -72,7 +72,7 @@ http://localhost:3000/api/health
 npm run email:test
 ```
 
-За публичния Render сайт е необходима публично достъпна MySQL база. Локалната MySQL база на компютъра не е достъпна от Render. В Render добави `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` и `ADMIN_TOKEN` като Environment Variables.
+За публичния Render сайт е необходима публично достъпна MySQL база. Локалната MySQL база на компютъра не е достъпна от Render. В Render добави `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` и `DB_NAME` като Environment Variables.
 
 ## Оптимизиране на изображенията
 

@@ -29,15 +29,23 @@ async function main(){
   const connection=await mysql.createConnection({...config,database,multipleStatements:true});
   const schema=fs.readFileSync(path.join(__dirname,'..','database','schema.sql'),'utf8');
   await connection.query(schema);
-  const [columns]=await connection.query(
+  const [orderUserColumns]=await connection.query(
     `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA=? AND TABLE_NAME='orders' AND COLUMN_NAME='user_id'`,
     [database]
   );
-  if(!columns.length){
+  if(!orderUserColumns.length){
     await connection.query('ALTER TABLE orders ADD COLUMN user_id BIGINT UNSIGNED NULL AFTER id');
     await connection.query('ALTER TABLE orders ADD INDEX idx_orders_user_created (user_id, created_at)');
     await connection.query('ALTER TABLE orders ADD CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL');
+  }
+  const [roleColumns]=await connection.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA=? AND TABLE_NAME='users' AND COLUMN_NAME='role'`,
+    [database]
+  );
+  if(!roleColumns.length){
+    await connection.query("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'customer' AFTER password_hash");
   }
   await connection.end();
   console.log('MySQL database and order tables are ready.');

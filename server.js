@@ -44,11 +44,8 @@ function createOrderNumber(){
 }
 
 function requireAdmin(req,res,next){
-  const expected=process.env.ADMIN_TOKEN;
-  const supplied=req.get('x-admin-token');
-  if(!expected||!supplied||supplied!==expected){
-    return res.status(401).json({error:'Неоторизиран достъп.'});
-  }
+  if(!req.user) return res.status(401).json({error:'Влез с администраторския профил.'});
+  if(req.user.role!=='admin') return res.status(403).json({error:'Този профил няма администраторски достъп.'});
   next();
 }
 
@@ -70,7 +67,7 @@ app.post('/api/auth/register',authLimiter,async(req,res)=>{
     await createSession(result.insertId,res);
     if(emailConfigured) queueEmail('Welcome',()=>sendWelcomeEmail({to:email,name}));
     return res.status(201).json({
-      user:{id:result.insertId,name,email,phone,default_address:null},
+      user:{id:result.insertId,name,email,phone,default_address:null,role:'customer'},
       emailQueued:emailConfigured
     });
   }catch(error){
@@ -85,7 +82,7 @@ app.post('/api/auth/login',authLimiter,async(req,res)=>{
   const password=String(req.body.password||'');
   try{
     const [users]=await pool.execute(
-      'SELECT id,name,email,phone,default_address,password_hash FROM users WHERE email=? LIMIT 1',
+      'SELECT id,name,email,phone,default_address,role,password_hash FROM users WHERE email=? LIMIT 1',
       [email]
     );
     const user=users[0];
