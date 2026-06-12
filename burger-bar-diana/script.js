@@ -373,6 +373,7 @@ orderForm.addEventListener('submit',async event=>{
     const response=await fetch('/api/orders',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
+      signal:AbortSignal.timeout(30000),
       body:JSON.stringify({
         name,
         email,
@@ -387,7 +388,7 @@ orderForm.addEventListener('submit',async event=>{
     const result=await response.json();
     if(!response.ok) throw new Error(result.error||'Поръчката не може да бъде записана.');
 
-    orderMessage.textContent=`Поръчката е записана! Номер: ${result.orderNumber}. ${result.emailSent?'Изпратихме потвърждение по имейл.':'Потвърждението по имейл не беше изпратено.'}`;
+    orderMessage.textContent=`Поръчката е записана! Номер: ${result.orderNumber}. ${result.emailQueued?'Потвърждението по имейл се изпраща.':'Имейл потвърждението не е настроено.'}`;
     $('#trackOrderNumber').value=result.orderNumber;
     $('#trackOrderPhone').value=phone;
     cart=[];
@@ -396,7 +397,9 @@ orderForm.addEventListener('submit',async event=>{
     deliveryAddressLabel.hidden=true;
     deliveryAddress.required=false;
   }catch(error){
-    orderMessage.textContent=error.message;
+    orderMessage.textContent=error.name==='TimeoutError'
+      ?'Сървърът не отговори навреме. Провери статуса на поръчката, преди да опиташ отново.'
+      :error.message;
   }finally{
     submitButton.disabled=!cart.length;
   }

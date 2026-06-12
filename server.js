@@ -24,6 +24,16 @@ const authLimiter=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:'draft
 const clean=value=>typeof value==='string'?value.trim():'';
 const normalizePhone=value=>clean(value).replace(/[^\d+]/g,'');
 
+function queueEmail(label,send){
+  setImmediate(async()=>{
+    try{
+      await send();
+    }catch(error){
+      console.error(`${label} email could not be sent:`,error);
+    }
+  });
+}
+
 function createOrderNumber(){
   return `DIA-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
 }
@@ -53,8 +63,11 @@ app.post('/api/auth/register',authLimiter,async(req,res)=>{
       [name,email,phone,passwordHash]
     );
     await createSession(result.insertId,res);
-    const emailResult=await sendWelcomeEmail({to:email,name});
-    return res.status(201).json({user:{id:result.insertId,name,email,phone,default_address:null},emailSent:emailResult.sent});
+    if(emailConfigured) queueEmail('Welcome',()=>sendWelcomeEmail({to:email,name}));
+    return res.status(201).json({
+      user:{id:result.insertId,name,email,phone,default_address:null},
+      emailQueued:emailConfigured
+    });
   }catch(error){
     if(error.code==='ER_DUP_ENTRY') return res.status(409).json({error:'Вече има профил с този имейл.'});
     console.error('Could not register user:',error);
@@ -213,17 +226,24 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
     connection.release();
     connection=null;
     const recipient=req.user?.email||email;
-    const emailResult=recipient?await sendOrderConfirmationEmail({
-      to:recipient,
-      name,
+    if(recipient&&emailConfigured){
+      queueEmail('Order confirmation',()=>sendOrderConfirmationEmail({
+        to:recipient,
+        name,
+        orderNumber,
+        total,
+        items,
+        fulfillmentType,
+        address:fulfillmentType==='delivery'?address:'',
+        requestedTime
+      }));
+    }
+    return res.status(201).json({
       orderNumber,
+      status:'received',
       total,
-      items,
-      fulfillmentType,
-      address:fulfillmentType==='delivery'?address:'',
-      requestedTime
-    }):{sent:false,reason:'no_recipient'};
-    return res.status(201).json({orderNumber,status:'received',total,emailSent:emailResult.sent});
+      emailQueued:Boolean(recipient&&emailConfigured)
+    });
   }catch(error){
     if(connection) await connection.rollback();
     console.error('Could not save order:',error);

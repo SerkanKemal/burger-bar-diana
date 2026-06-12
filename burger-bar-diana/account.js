@@ -124,7 +124,7 @@ document.querySelector('#registerForm').addEventListener('submit',async event=>{
     renderAccountState(result.user);
     await loadProfileContent();
     authMessage.textContent='';
-    profileMessage.textContent=result.emailSent?'Изпратихме приветствен имейл.':'Профилът е създаден, но приветственият имейл не беше изпратен.';
+    profileMessage.textContent=result.emailQueued?'Приветственият имейл се изпраща.':'Профилът е създаден, но имейлите не са настроени.';
   }catch(error){authMessage.textContent=error.message;}
 });
 
