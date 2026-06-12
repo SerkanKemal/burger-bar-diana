@@ -5,6 +5,7 @@ const {rateLimit}=require('express-rate-limit');
 require('dotenv').config();
 const {pool}=require('./src/db');
 const {products}=require('./src/catalog');
+const {getOrderHoursStatus,isValidRequestedTime}=require('./src/opening-hours');
 const {hashPassword,verifyPassword,createSession,optionalAuth,requireAuth,destroySession}=require('./src/auth');
 const {
   sendWelcomeEmail,
@@ -227,6 +228,11 @@ app.get('/api/health',async(req,res)=>{
   }
 });
 
+app.get('/api/order-hours',(req,res)=>{
+  res.set('Cache-Control','no-store');
+  return res.json(getOrderHoursStatus());
+});
+
 app.post('/api/orders',orderLimiter,async(req,res)=>{
   const name=clean(req.body.name);
   const email=clean(req.body.email).toLowerCase();
@@ -236,7 +242,9 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
   const requestedTime=clean(req.body.requestedTime);
   const note=clean(req.body.note);
   const requestedItems=Array.isArray(req.body.items)?req.body.items:[];
+  const orderHours=getOrderHoursStatus();
 
+  if(!orderHours.open) return res.status(403).json({error:orderHours.message});
   if(name.length<2||name.length>100) return res.status(400).json({error:'Въведи валидно име.'});
   if(!req.user&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:'Въведи валиден имейл за потвърждението.'});
   if(phone.length<7||phone.length>20) return res.status(400).json({error:'Въведи валиден телефон.'});
@@ -245,6 +253,7 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
     return res.status(400).json({error:'Въведи валиден адрес за доставка.'});
   }
   if(note.length>500||requestedTime.length>50) return res.status(400).json({error:'Въведените данни са прекалено дълги.'});
+  if(!isValidRequestedTime(requestedTime)) return res.status(400).json({error:'Желаният час трябва да бъде между 11:30 и 22:30 ч.'});
   if(!requestedItems.length||requestedItems.length>50) return res.status(400).json({error:'Количката е празна или прекалено голяма.'});
 
   const items=[];

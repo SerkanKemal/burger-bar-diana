@@ -198,6 +198,9 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--lime);outline-offse
 .fulfillment-options label{align-items:center;flex-direction:row;background:var(--cream);padding:11px;border-radius:10px;text-transform:none;letter-spacing:0;cursor:pointer}
 .fulfillment-options input{margin:0;width:auto}
 .order-message{font-weight:800;color:var(--orange)!important}
+#orderHoursStatus{border-radius:10px;padding:10px;font-weight:800}
+#orderHoursStatus.orders-open{background:rgba(75,145,45,.12);color:#356d20}
+#orderHoursStatus.orders-closed{background:rgba(163,29,20,.1);color:#a31d14}
 .track-order-form{display:flex;flex-direction:column;gap:12px;background:var(--ink);color:#fff;padding:18px;border-radius:18px}
 .track-order-form h3{margin:0}
 .track-order-form button{background:var(--lime);color:var(--ink);border-radius:12px;padding:12px;cursor:pointer;font-weight:800}

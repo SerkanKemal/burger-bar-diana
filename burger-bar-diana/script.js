@@ -221,11 +221,13 @@ const cartCount=$('#cartCount');
 const cartTotal=$('#cartTotal');
 const orderForm=$('#orderForm');
 const orderMessage=$('#orderMessage');
+const orderHoursStatus=$('#orderHoursStatus');
 const deliveryAddressLabel=$('#deliveryAddressLabel');
 const deliveryAddress=$('#deliveryAddress');
 const trackOrderForm=$('#trackOrderForm');
 const trackOrderResult=$('#trackOrderResult');
 let cart=[];
+let acceptingOrders=false;
 
 try{
   cart=JSON.parse(localStorage.getItem('diana-cart'))||[];
@@ -253,13 +255,17 @@ function saveCart(){
   localStorage.setItem('diana-cart',JSON.stringify(cart));
 }
 
+function updateOrderSubmitState(){
+  orderForm.querySelector('.order-submit').disabled=!cart.length||!acceptingOrders;
+}
+
 function renderCart(){
   const count=cart.reduce((sum,item)=>sum+item.quantity,0);
   const total=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
   cartCount.textContent=count;
   cartCount.setAttribute('aria-label',`${count} продукта`);
   cartTotal.textContent=formatPrice(total);
-  orderForm.querySelector('.order-submit').disabled=!cart.length;
+  updateOrderSubmitState();
 
   if(!cart.length){
     cartItems.innerHTML='<p class="cart-empty">Количката е празна. Добави нещо вкусно от менюто.</p>';
@@ -279,6 +285,22 @@ function renderCart(){
     </article>
   `).join('');
   saveCart();
+}
+
+async function loadOrderHours(){
+  try{
+    const response=await fetch('/api/order-hours',{cache:'no-store'});
+    const result=await response.json();
+    acceptingOrders=Boolean(result.open);
+    orderHoursStatus.textContent=result.message;
+    orderHoursStatus.classList.toggle('orders-open',acceptingOrders);
+    orderHoursStatus.classList.toggle('orders-closed',!acceptingOrders);
+  }catch{
+    acceptingOrders=false;
+    orderHoursStatus.textContent='Не можем да проверим работното време. Опитай отново след малко.';
+    orderHoursStatus.classList.add('orders-closed');
+  }
+  updateOrderSubmitState();
 }
 
 function openCart(){
@@ -360,6 +382,10 @@ const statusLabels={
 orderForm.addEventListener('submit',async event=>{
   event.preventDefault();
   if(!cart.length) return;
+  if(!acceptingOrders){
+    orderMessage.textContent=orderHoursStatus.textContent;
+    return;
+  }
   const submitButton=orderForm.querySelector('.order-submit');
   const name=$('#customerName').value.trim();
   const email=$('#customerEmail').value.trim();
@@ -401,7 +427,7 @@ orderForm.addEventListener('submit',async event=>{
       ?'Сървърът не отговори навреме. Провери статуса на поръчката, преди да опиташ отново.'
       :error.message;
   }finally{
-    submitButton.disabled=!cart.length;
+    updateOrderSubmitState();
   }
 });
 
@@ -426,5 +452,7 @@ window.addEventListener('keydown',event=>{
 });
 
 renderCart();
+loadOrderHours();
+setInterval(loadOrderHours,60*1000);
 
 $('#year').textContent=new Date().getFullYear();
