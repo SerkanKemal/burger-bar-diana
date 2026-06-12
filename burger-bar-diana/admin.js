@@ -2,6 +2,7 @@ const ordersContainer=document.querySelector('#adminOrders');
 const message=document.querySelector('#adminMessage');
 const loginForm=document.querySelector('#adminLogin');
 const logoutButton=document.querySelector('#adminLogout');
+const exportButton=document.querySelector('#exportOrders');
 const filters=document.querySelector('#orderFilters');
 const refreshCountdown=document.querySelector('#refreshCountdown');
 const refreshIntervalSeconds=60;
@@ -37,6 +38,7 @@ function setAuthenticated(value){
   authenticated=value;
   loginForm.hidden=value;
   logoutButton.hidden=!value;
+  exportButton.hidden=!value;
   filters.hidden=!value;
   if(!value) ordersContainer.innerHTML='';
 }
@@ -121,6 +123,9 @@ logoutButton.addEventListener('click',async()=>{
 });
 
 document.querySelector('#refreshOrders').addEventListener('click',loadOrders);
+exportButton.addEventListener('click',()=>{
+  window.location.href=`/api/admin/orders.csv?filter=${encodeURIComponent(currentFilter)}`;
+});
 filters.addEventListener('click',event=>{
   const button=event.target.closest('[data-filter]');
   if(!button) return;

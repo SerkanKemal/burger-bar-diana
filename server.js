@@ -48,6 +48,23 @@ function createOrderNumber(){
   return `DIA-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
 }
 
+function csvCell(value){
+  let text=String(value??'');
+  if(/^[=+\-@]/.test(text)) text=`'${text}`;
+  return `"${text.replace(/"/g,'""')}"`;
+}
+
+function csvDate(value){
+  return new Intl.DateTimeFormat('bg-BG',{
+    timeZone:'Europe/Sofia',
+    year:'numeric',
+    month:'2-digit',
+    day:'2-digit',
+    hour:'2-digit',
+    minute:'2-digit'
+  }).format(new Date(value));
+}
+
 function requireAdmin(req,res,next){
   if(!req.user) return res.status(401).json({error:'Влез с администраторския профил.'});
   if(req.user.role!=='admin') return res.status(403).json({error:'Този профил няма администраторски достъп.'});
@@ -376,6 +393,50 @@ app.get('/api/admin/orders',adminLimiter,requireAdmin,async(req,res)=>{
   }catch(error){
     console.error('Could not load admin orders:',error);
     return res.status(503).json({error:'Поръчките не са достъпни в момента.'});
+  }
+});
+
+app.get('/api/admin/orders.csv',adminLimiter,requireAdmin,async(req,res)=>{
+  try{
+    const filter=buildOrderFilter(clean(req.query.filter));
+    const [rows]=await pool.execute(
+      `SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.fulfillment_type,
+              o.delivery_address,o.requested_time,o.note,o.status,o.total,o.created_at,
+              GROUP_CONCAT(CONCAT(oi.quantity,' x ',oi.product_name,' (',oi.line_total,' лв.)')
+                ORDER BY oi.id SEPARATOR ' | ') items
+       FROM orders o
+       LEFT JOIN order_items oi ON oi.order_id=o.id
+       ${filter.where}
+       GROUP BY o.id
+       ORDER BY o.created_at DESC
+       LIMIT 5000`,
+      filter.values
+    );
+    const statusLabels={received:'Получена',confirmed:'Потвърдена',preparing:'Приготвя се',ready:'Готова',completed:'Приключена',cancelled:'Отказана'};
+    const header=['Номер','Дата','Клиент','Телефон','Получаване','Адрес','Желан час','Статус','Продукти','Бележка','Общо (лв.)'];
+    const lines=[header,...rows.map(order=>[
+      order.order_number,
+      csvDate(order.created_at),
+      order.customer_name,
+      order.customer_phone,
+      order.fulfillment_type==='delivery'?'Доставка':'Вземане от място',
+      order.delivery_address||'',
+      order.requested_time||'',
+      statusLabels[order.status]||order.status,
+      order.items||'',
+      order.note||'',
+      Number(order.total).toFixed(2)
+    ])].map(row=>row.map(csvCell).join(';'));
+    const date=new Date().toISOString().slice(0,10);
+    res.set({
+      'Content-Type':'text/csv; charset=utf-8',
+      'Content-Disposition':`attachment; filename="burger-diana-orders-${filter.selected}-${date}.csv"`,
+      'Cache-Control':'no-store'
+    });
+    return res.send(`\uFEFF${lines.join('\r\n')}`);
+  }catch(error){
+    console.error('Could not export admin orders:',error);
+    return res.status(503).json({error:'CSV файлът не може да бъде създаден в момента.'});
   }
 });
 
