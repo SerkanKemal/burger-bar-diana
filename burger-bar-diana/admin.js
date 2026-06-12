@@ -2,6 +2,7 @@ const ordersContainer=document.querySelector('#adminOrders');
 const message=document.querySelector('#adminMessage');
 const loginForm=document.querySelector('#adminLogin');
 const logoutButton=document.querySelector('#adminLogout');
+const filters=document.querySelector('#orderFilters');
 const refreshCountdown=document.querySelector('#refreshCountdown');
 const refreshIntervalSeconds=60;
 const statusLabels={
@@ -15,6 +16,7 @@ const statusLabels={
 let secondsUntilRefresh=refreshIntervalSeconds;
 let isLoading=false;
 let authenticated=false;
+let currentFilter='active';
 
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
@@ -35,12 +37,13 @@ function setAuthenticated(value){
   authenticated=value;
   loginForm.hidden=value;
   logoutButton.hidden=!value;
+  filters.hidden=!value;
   if(!value) ordersContainer.innerHTML='';
 }
 
 function renderOrders(orders){
   if(!orders.length){
-    ordersContainer.innerHTML='<p>Все още няма записани поръчки.</p>';
+    ordersContainer.innerHTML='<p>Няма поръчки за избрания филтър.</p>';
     return;
   }
   ordersContainer.innerHTML=orders.map(order=>`
@@ -68,7 +71,7 @@ async function loadOrders(){
   isLoading=true;
   message.textContent='Зареждаме поръчките...';
   try{
-    const result=await request('/api/admin/orders');
+    const result=await request(`/api/admin/orders?filter=${encodeURIComponent(currentFilter)}`);
     renderOrders(result.orders);
     message.textContent=`Заредени поръчки: ${result.orders.length}`;
     secondsUntilRefresh=refreshIntervalSeconds;
@@ -118,6 +121,13 @@ logoutButton.addEventListener('click',async()=>{
 });
 
 document.querySelector('#refreshOrders').addEventListener('click',loadOrders);
+filters.addEventListener('click',event=>{
+  const button=event.target.closest('[data-filter]');
+  if(!button) return;
+  currentFilter=button.dataset.filter;
+  filters.querySelectorAll('[data-filter]').forEach(item=>item.classList.toggle('active',item===button));
+  loadOrders();
+});
 ordersContainer.addEventListener('submit',async event=>{
   const form=event.target.closest('.status-form');
   if(!form) return;

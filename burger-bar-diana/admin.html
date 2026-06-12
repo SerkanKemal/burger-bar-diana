@@ -30,6 +30,14 @@
       <button id="refreshOrders" type="button">Обнови</button>
       <button id="adminLogout" type="button" hidden>Изход</button>
     </div>
+    <nav class="order-filters" id="orderFilters" aria-label="Филтри за поръчките" hidden>
+      <button class="active" type="button" data-filter="active">Активни</button>
+      <button type="button" data-filter="today">Днес</button>
+      <button type="button" data-filter="this-week">Тази седмица</button>
+      <button type="button" data-filter="previous-week">Предната седмица</button>
+      <button type="button" data-filter="completed">Приключени</button>
+      <button type="button" data-filter="all">Всички</button>
+    </nav>
     <section id="adminOrders" class="orders-grid"></section>
   </main>
   <script src="admin.js"></script>

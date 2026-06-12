@@ -6,6 +6,7 @@ require('dotenv').config();
 const {pool}=require('./src/db');
 const {products}=require('./src/catalog');
 const {getOrderHoursStatus,isValidRequestedTime}=require('./src/opening-hours');
+const {buildOrderFilter}=require('./src/order-filters');
 const {hashPassword,verifyPassword,createSession,optionalAuth,requireAuth,destroySession}=require('./src/auth');
 const {
   sendWelcomeEmail,
@@ -351,10 +352,12 @@ app.get('/api/orders/:orderNumber',orderLimiter,async(req,res)=>{
 
 app.get('/api/admin/orders',adminLimiter,requireAdmin,async(req,res)=>{
   try{
+    const filter=buildOrderFilter(clean(req.query.filter));
     const [orders]=await pool.execute(
       `SELECT id,order_number,customer_name,customer_phone,fulfillment_type,delivery_address,
               requested_time,note,status,total,created_at,updated_at
-       FROM orders ORDER BY created_at DESC LIMIT 100`
+       FROM orders ${filter.where} ORDER BY created_at DESC LIMIT 500`,
+      filter.values
     );
     if(orders.length){
       const ids=orders.map(order=>order.id);
@@ -369,7 +372,7 @@ app.get('/api/admin/orders',adminLimiter,requireAdmin,async(req,res)=>{
         delete order.id;
       });
     }
-    return res.json({orders});
+    return res.json({orders,filter:filter.selected});
   }catch(error){
     console.error('Could not load admin orders:',error);
     return res.status(503).json({error:'Поръчките не са достъпни в момента.'});
