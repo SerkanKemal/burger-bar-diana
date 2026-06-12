@@ -102,8 +102,33 @@ document.querySelectorAll('[data-auth-view]').forEach(button=>button.addEventLis
   document.querySelectorAll('[data-auth-view]').forEach(item=>item.classList.toggle('active',item===button));
   document.querySelector('#loginForm').hidden=button.dataset.authView!=='login';
   document.querySelector('#registerForm').hidden=button.dataset.authView!=='register';
+  document.querySelector('#forgotPasswordForm').hidden=true;
   authMessage.textContent='';
 }));
+
+document.querySelector('#showForgotPassword').addEventListener('click',()=>{
+  document.querySelector('#loginForm').hidden=true;
+  document.querySelector('#registerForm').hidden=true;
+  document.querySelector('#forgotPasswordForm').hidden=false;
+  authMessage.textContent='';
+});
+
+document.querySelector('#backToLogin').addEventListener('click',()=>{
+  document.querySelector('#forgotPasswordForm').hidden=true;
+  document.querySelector('#loginForm').hidden=false;
+  authMessage.textContent='';
+});
+
+document.querySelector('#forgotPasswordForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  authMessage.textContent='Изпращаме линк...';
+  try{
+    const form=new FormData(event.currentTarget);
+    const result=await request('/api/auth/forgot-password',{method:'POST',body:JSON.stringify(Object.fromEntries(form))});
+    authMessage.textContent=result.message;
+    event.currentTarget.reset();
+  }catch(error){authMessage.textContent=error.message;}
+});
 
 document.querySelector('#loginForm').addEventListener('submit',async event=>{
   event.preventDefault();

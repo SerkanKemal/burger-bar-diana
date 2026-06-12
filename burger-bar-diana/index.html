@@ -322,6 +322,7 @@
         <label>Имейл<input name="email" type="email" autocomplete="email" required></label>
         <label>Парола<input name="password" type="password" autocomplete="current-password" required></label>
         <button type="submit">Влез</button>
+        <button class="form-link-button" id="showForgotPassword" type="button">Забравена парола?</button>
       </form>
       <form class="account-form" id="registerForm" hidden>
         <label>Име<input name="name" autocomplete="name" required></label>
@@ -329,6 +330,13 @@
         <label>Телефон<input name="phone" type="tel" autocomplete="tel" required></label>
         <label>Парола<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
         <button type="submit">Създай профил</button>
+      </form>
+      <form class="account-form" id="forgotPasswordForm" hidden>
+        <h3>Нова парола</h3>
+        <p>Въведи имейла на профила си и ще изпратим защитен линк.</p>
+        <label>Имейл<input name="email" type="email" autocomplete="email" required></label>
+        <button type="submit">Изпрати линк</button>
+        <button class="form-link-button" id="backToLogin" type="button">Обратно към входа</button>
       </form>
       <p class="account-message" id="authMessage" aria-live="polite"></p>
     </div>

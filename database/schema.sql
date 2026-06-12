@@ -20,6 +20,17 @@ CREATE TABLE IF NOT EXISTS user_sessions (
   INDEX idx_sessions_expiry (expires_at)
 );
 
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  used_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_password_reset_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_password_reset_expiry (expires_at)
+);
+
 CREATE TABLE IF NOT EXISTS orders (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NULL,

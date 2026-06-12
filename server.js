@@ -9,6 +9,7 @@ const {hashPassword,verifyPassword,createSession,optionalAuth,requireAuth,destro
 const {
   sendWelcomeEmail,
   sendOrderConfirmationEmail,
+  sendPasswordResetEmail,
   configured:emailConfigured,
   provider:emailProvider
 }=require('./src/email');
@@ -18,6 +19,7 @@ const port=process.env.PORT||3000;
 const publicDirectory=path.join(__dirname,'burger-bar-diana');
 
 app.disable('x-powered-by');
+app.set('trust proxy',1);
 app.use(express.json({limit:'100kb'}));
 app.use(express.static(publicDirectory));
 app.use(optionalAuth);
@@ -28,6 +30,7 @@ const adminLimiter=rateLimit({windowMs:15*60*1000,limit:100,standardHeaders:'dra
 const authLimiter=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:'draft-8',legacyHeaders:false});
 const clean=value=>typeof value==='string'?value.trim():'';
 const normalizePhone=value=>clean(value).replace(/[^\d+]/g,'');
+const hashToken=token=>crypto.createHash('sha256').update(token).digest('hex');
 
 function queueEmail(label,send){
   setImmediate(async()=>{
@@ -95,6 +98,66 @@ app.post('/api/auth/login',authLimiter,async(req,res)=>{
   }catch(error){
     console.error('Could not login user:',error);
     return res.status(503).json({error:'Входът не е достъпен в момента.'});
+  }
+});
+
+app.post('/api/auth/forgot-password',authLimiter,async(req,res)=>{
+  const email=clean(req.body.email).toLowerCase();
+  const genericMessage='Ако има профил с този имейл, ще получиш линк за нова парола.';
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>190){
+    return res.json({message:genericMessage});
+  }
+  try{
+    const [users]=await pool.execute('SELECT id,name,email FROM users WHERE email=? LIMIT 1',[email]);
+    const user=users[0];
+    if(user&&emailConfigured){
+      const token=crypto.randomBytes(32).toString('hex');
+      await pool.execute('DELETE FROM password_reset_tokens WHERE user_id=? OR expires_at<NOW()',[user.id]);
+      await pool.execute(
+        'INSERT INTO password_reset_tokens (user_id,token_hash,expires_at) VALUES (?,?,DATE_ADD(NOW(), INTERVAL 30 MINUTE))',
+        [user.id,hashToken(token)]
+      );
+      const resetUrl=`${req.protocol}://${req.get('host')}/reset-password.html?token=${encodeURIComponent(token)}`;
+      queueEmail('Password reset',()=>sendPasswordResetEmail({to:user.email,name:user.name,resetUrl}));
+    }
+    return res.json({message:genericMessage});
+  }catch(error){
+    console.error('Could not create password reset:',error);
+    return res.status(503).json({error:'Заявката не е достъпна в момента. Опитай отново.'});
+  }
+});
+
+app.post('/api/auth/reset-password',authLimiter,async(req,res)=>{
+  const token=clean(req.body.token);
+  const password=String(req.body.password||'');
+  if(!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).json({error:'Линкът за нова парола е невалиден.'});
+  if(password.length<8||password.length>100) return res.status(400).json({error:'Паролата трябва да бъде поне 8 символа.'});
+  let connection;
+  try{
+    connection=await pool.getConnection();
+    await connection.beginTransaction();
+    const [tokens]=await connection.execute(
+      `SELECT id,user_id FROM password_reset_tokens
+       WHERE token_hash=? AND used_at IS NULL AND expires_at>NOW() LIMIT 1 FOR UPDATE`,
+      [hashToken(token)]
+    );
+    const reset=tokens[0];
+    if(!reset){
+      await connection.rollback();
+      return res.status(400).json({error:'Линкът е изтекъл или вече е използван.'});
+    }
+    const passwordHash=await hashPassword(password);
+    await connection.execute('UPDATE users SET password_hash=? WHERE id=?',[passwordHash,reset.user_id]);
+    await connection.execute('UPDATE password_reset_tokens SET used_at=NOW() WHERE id=?',[reset.id]);
+    await connection.execute('DELETE FROM user_sessions WHERE user_id=?',[reset.user_id]);
+    await connection.commit();
+    return res.json({message:'Паролата е сменена успешно. Вече можеш да влезеш.'});
+  }catch(error){
+    if(connection) await connection.rollback();
+    console.error('Could not reset password:',error);
+    return res.status(503).json({error:'Паролата не може да бъде сменена в момента.'});
+  }finally{
+    connection?.release();
   }
 });
 

@@ -112,4 +112,18 @@ function sendOrderConfirmationEmail({to,name,orderNumber,total,items,fulfillment
   });
 }
 
-module.exports={sendWelcomeEmail,sendOrderConfirmationEmail,configured,provider};
+function sendPasswordResetEmail({to,name,resetUrl}){
+  return sendMail({
+    to,
+    subject:'Нова парола за Burger Bar & Bagel Diana',
+    text:`Здравейте, ${name}! Отворете този линк до 30 минути, за да зададете нова парола: ${resetUrl}`,
+    html:layout('Задаване на нова парола',`
+      <p style="font-size:16px;line-height:1.7">Здравейте, <strong>${escapeHtml(name)}</strong>!</p>
+      <p style="font-size:16px;line-height:1.7">Получихме заявка за нова парола. Линкът е валиден 30 минути и може да бъде използван само веднъж.</p>
+      <p style="margin:26px 0"><a href="${escapeHtml(resetUrl)}" style="display:inline-block;background:#ff5b2d;color:#fff;text-decoration:none;padding:14px 20px;border-radius:10px;font-weight:700">Задай нова парола</a></p>
+      <p style="font-size:13px;line-height:1.6;color:#706d65">Ако не сте поискали промяната, можете да пренебрегнете този имейл.</p>
+    `)
+  });
+}
+
+module.exports={sendWelcomeEmail,sendOrderConfirmationEmail,sendPasswordResetEmail,configured,provider};
