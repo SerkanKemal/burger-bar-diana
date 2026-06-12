@@ -9,6 +9,7 @@ const sender={
 };
 const apiConfigured=Boolean(process.env.BREVO_API_KEY&&sender.email);
 const configured=apiConfigured||smtpConfigured;
+const provider=apiConfigured?'brevo':smtpConfigured?'smtp':'none';
 const transporter=smtpConfigured?nodemailer.createTransport({
   host:process.env.SMTP_HOST,
   port:Number(process.env.SMTP_PORT||587),
@@ -111,4 +112,4 @@ function sendOrderConfirmationEmail({to,name,orderNumber,total,items,fulfillment
   });
 }
 
-module.exports={sendWelcomeEmail,sendOrderConfirmationEmail,configured};
+module.exports={sendWelcomeEmail,sendOrderConfirmationEmail,configured,provider};

@@ -6,7 +6,12 @@ require('dotenv').config();
 const {pool}=require('./src/db');
 const {products}=require('./src/catalog');
 const {hashPassword,verifyPassword,createSession,optionalAuth,requireAuth,destroySession}=require('./src/auth');
-const {sendWelcomeEmail,sendOrderConfirmationEmail,configured:emailConfigured}=require('./src/email');
+const {
+  sendWelcomeEmail,
+  sendOrderConfirmationEmail,
+  configured:emailConfigured,
+  provider:emailProvider
+}=require('./src/email');
 
 const app=express();
 const port=process.env.PORT||3000;
@@ -151,7 +156,12 @@ app.patch('/api/me/notifications/read',requireAuth,async(req,res)=>{
 app.get('/api/health',async(req,res)=>{
   try{
     await pool.query('SELECT 1');
-    return res.json({status:'ok',database:'connected',email:emailConfigured?'configured':'not_configured'});
+    return res.json({
+      status:'ok',
+      database:'connected',
+      email:emailConfigured?'configured':'not_configured',
+      emailProvider
+    });
   }catch{
     return res.status(503).json({status:'error',database:'disconnected'});
   }
