@@ -1,7 +1,15 @@
 const nodemailer=require('nodemailer');
 
-const configured=Boolean(process.env.SMTP_HOST&&process.env.SMTP_USER&&process.env.SMTP_PASSWORD);
-const transporter=configured?nodemailer.createTransport({
+const smtpConfigured=Boolean(process.env.SMTP_HOST&&process.env.SMTP_USER&&process.env.SMTP_PASSWORD);
+const fromValue=process.env.EMAIL_FROM||`Burger Bar Diana <${process.env.SMTP_USER||''}>`;
+const fromMatch=fromValue.match(/^(.*?)\s*<([^>]+)>$/);
+const sender={
+  name:(fromMatch?.[1]||'Burger Bar Diana').trim(),
+  email:(fromMatch?.[2]||fromValue).trim()
+};
+const apiConfigured=Boolean(process.env.BREVO_API_KEY&&sender.email);
+const configured=apiConfigured||smtpConfigured;
+const transporter=smtpConfigured?nodemailer.createTransport({
   host:process.env.SMTP_HOST,
   port:Number(process.env.SMTP_PORT||587),
   secure:String(process.env.SMTP_SECURE).toLowerCase()==='true',
@@ -28,16 +36,44 @@ function layout(title,content){
 }
 
 async function sendMail(message){
+  if(apiConfigured){
+    try{
+      const response=await fetch('https://api.brevo.com/v3/smtp/email',{
+        method:'POST',
+        headers:{
+          'accept':'application/json',
+          'api-key':process.env.BREVO_API_KEY,
+          'content-type':'application/json'
+        },
+        body:JSON.stringify({
+          sender,
+          to:[{email:message.to}],
+          subject:message.subject,
+          textContent:message.text,
+          htmlContent:message.html
+        }),
+        signal:AbortSignal.timeout(20000)
+      });
+      if(!response.ok){
+        const details=await response.text();
+        throw new Error(`Brevo API ${response.status}: ${details}`);
+      }
+      return {sent:true,provider:'brevo'};
+    }catch(error){
+      console.error('Email could not be sent with Brevo:',error.message);
+      return {sent:false,reason:'send_failed'};
+    }
+  }
   if(!transporter){
     console.warn('Email skipped: SMTP is not configured.');
     return {sent:false,reason:'not_configured'};
   }
   try{
     await transporter.sendMail({
-      from:process.env.EMAIL_FROM||`Burger Bar Diana <${process.env.SMTP_USER}>`,
+      from:fromValue,
       ...message
     });
-    return {sent:true};
+    return {sent:true,provider:'smtp'};
   }catch(error){
     console.error('Email could not be sent:',error.message);
     return {sent:false,reason:'send_failed'};
