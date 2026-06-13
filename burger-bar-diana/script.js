@@ -227,6 +227,7 @@ const deliveryAddress=$('#deliveryAddress');
 const trackOrderForm=$('#trackOrderForm');
 const trackOrderResult=$('#trackOrderResult');
 let cart=[];
+const orderableProductIds=new Set($$('[data-id]').map(product=>product.dataset.id));
 let acceptingOrders=false;
 
 try{
@@ -235,6 +236,7 @@ try{
   cart=[];
 }
 cart=Array.isArray(cart)?cart.filter(item=>
+  orderableProductIds.has(item?.id) &&
   typeof item?.id==='string' &&
   typeof item?.name==='string' &&
   Number.isFinite(item?.price) &&

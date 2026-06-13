@@ -6,7 +6,6 @@ const products=new Map([
   ['torpedo-shrimp-burger',{name:'Торпедо скариди',price:16.90}],
   ['mexico-burger',{name:'Мексико',price:15.40}],
   ['king-prawn-burger',{name:'Beef & King Prawn',price:18.80}],
-  ['trio-classic-burger',{name:'Трио класик',price:14.60}],
   ['crispy-chicken-burger',{name:'Crispy Chicken',price:12.80}],
   ['coca-cola',{name:'Coca-Cola',price:3.00}],
   ['fanta-orange',{name:'Fanta Orange',price:3.00}],

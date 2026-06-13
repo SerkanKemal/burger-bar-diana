@@ -109,7 +109,7 @@
           </div>
           <div class="stats">
             <div><strong data-count="118" data-google-count>0</strong><span>Google оценки</span></div>
-            <div><strong data-count="15">0</strong><span>предложения в менюто</span></div>
+            <div><strong data-count="21">0</strong><span>предложения в менюто</span></div>
           </div>
         </div>
       </div>
@@ -122,6 +122,7 @@
       </div>
       <div class="menu-tabs reveal" role="group" aria-label="Филтри за съдържание">
         <button class="tab active" data-filter="burgers" aria-pressed="true">Бургери</button>
+        <button class="tab" data-filter="bagels" aria-pressed="false">Бейгъли</button>
         <button class="tab" data-filter="drinks" aria-pressed="false">Напитки</button>
       </div>
       <div class="product-heading reveal" data-section-category="burgers">
@@ -133,6 +134,11 @@
         <span class="kicker">Студени напитки</span>
         <h3>Нещо освежаващо</h3>
         <p>Цените на напитките са ориентировъчни и се потвърждават при приемане на поръчката.</p>
+      </div>
+      <div class="product-heading hidden" data-section-category="bagels">
+        <span class="kicker">Солени и сладки бейгъли</span>
+        <h3>Избери нещо различно</h3>
+        <p>Цените на бейгълите ще бъдат добавени след потвърждение от заведението.</p>
       </div>
       <div class="product-grid">
         <article class="menu-card product-card reveal" data-category="burgers" data-id="classic-burger" data-name="Класически бургер" data-price="14.60">
@@ -177,17 +183,53 @@
           <p>Телешко с кралски скариди, салата и сос „1000 острова“.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
         </article>
-        <article class="menu-card product-card reveal" data-category="burgers" data-id="trio-classic-burger" data-name="Трио класик" data-price="14.60">
-          <div class="product-img"><img src="images/burgers/trio-classic-burger.webp" alt="Трио класически мини бургери" loading="lazy" decoding="async"></div>
-          <div class="menu-info"><div><span>За споделяне</span><h3>Трио класик</h3></div><strong>14,60 лв.</strong></div>
-          <p>Три класически мини бургера с пържени картофки.</p>
-          <button class="add-to-cart" type="button">Добави в количката</button>
+        <article class="menu-card product-card reveal unavailable-card" data-category="burgers">
+          <div class="product-img"><img src="images/burgers/guacamole-bacon-burger.webp" alt="Телешки бургер с гуакамоле и хрупкав бекон" loading="lazy" decoding="async"></div>
+          <div class="menu-info"><div><span>Телешко</span><h3>Гуакамоле и хрупкав бекон</h3></div><strong>Цена на място</strong></div>
+          <p>Телешко, гуакамоле, хрупкав бекон, чедър и салата.</p>
+          <button class="add-to-cart" type="button" disabled>Очакваме цена</button>
         </article>
         <article class="menu-card product-card reveal" data-category="burgers" data-id="crispy-chicken-burger" data-name="Crispy Chicken" data-price="12.80">
           <div class="product-img"><img src="images/burgers/crispy-chicken-burger.webp" alt="Хрупкав пилешки бургер" loading="lazy" decoding="async"></div>
           <div class="menu-info"><div><span>Пилешко</span><h3>Crispy Chicken</h3></div><strong>12,80 лв.</strong></div>
           <p>Хрупкаво пиле, чедър, маруля и уасаби майонеза.</p>
           <button class="add-to-cart" type="button">Добави в количката</button>
+        </article>
+        <article class="menu-card product-card reveal unavailable-card hidden" data-category="bagels">
+          <div class="product-img"><img src="images/bagels/salmon-bagel.webp" alt="Бейгъл със сьомга и крема сирене" loading="lazy" decoding="async"></div>
+          <div class="menu-info"><div><span>Солен бейгъл</span><h3>Сьомга и крема сирене</h3></div><strong>Цена на място</strong></div>
+          <p>Сьомга, крема сирене и салата микс от свежи млади листенца маруля.</p>
+          <button class="add-to-cart" type="button" disabled>Очакваме цена</button>
+        </article>
+        <article class="menu-card product-card reveal unavailable-card hidden" data-category="bagels">
+          <div class="product-img"><img src="images/bagels/egg-bacon-bagel.webp" alt="Бейгъл с бъркано яйце и хрупкав бекон" loading="lazy" decoding="async"></div>
+          <div class="menu-info"><div><span>Солен бейгъл</span><h3>Бъркано яйце и бекон</h3></div><strong>Цена на място</strong></div>
+          <p>Бъркано яйце, хрупкав бекон, чедър и салата микс.</p>
+          <button class="add-to-cart" type="button" disabled>Очакваме цена</button>
+        </article>
+        <article class="menu-card product-card reveal unavailable-card hidden" data-category="bagels">
+          <div class="product-img"><img src="images/bagels/turkey-guacamole-bagel.webp" alt="Бейгъл с пуешко филе и гуакамоле" loading="lazy" decoding="async"></div>
+          <div class="menu-info"><div><span>Солен бейгъл</span><h3>Пуешко и гуакамоле</h3></div><strong>Цена на място</strong></div>
+          <p>Крема сирене, пушено пуешко филе, домат, рукола и гуакамоле.</p>
+          <button class="add-to-cart" type="button" disabled>Очакваме цена</button>
+        </article>
+        <article class="menu-card product-card reveal unavailable-card hidden" data-category="bagels">
+          <div class="product-img"><img src="images/bagels/oreo-bagel.webp" alt="Сладък бейгъл с маскарпоне и Орео" loading="lazy" decoding="async"></div>
+          <div class="menu-info"><div><span>Сладък бейгъл</span><h3>Маскарпоне и Орео</h3></div><strong>Цена на място</strong></div>
+          <p>Маскарпоне, Орео и парченца шоколад.</p>
+          <button class="add-to-cart" type="button" disabled>Очакваме цена</button>
+        </article>
+        <article class="menu-card product-card reveal unavailable-card hidden" data-category="bagels">
+          <div class="product-img"><img src="images/bagels/camembert-blueberry-bagel.webp" alt="Сладък бейгъл с камамбер и боровинки" loading="lazy" decoding="async"></div>
+          <div class="menu-info"><div><span>Сладък бейгъл</span><h3>Камамбер и боровинки</h3></div><strong>Цена на място</strong></div>
+          <p>Камамбер, боровинково сладко, свежи боровинки и банан.</p>
+          <button class="add-to-cart" type="button" disabled>Очакваме цена</button>
+        </article>
+        <article class="menu-card product-card reveal unavailable-card hidden" data-category="bagels">
+          <div class="product-img"><img src="images/bagels/strawberry-bagel.webp" alt="Сладък бейгъл с крема сирене и ягоди" loading="lazy" decoding="async"></div>
+          <div class="menu-info"><div><span>Сладък бейгъл</span><h3>Крема сирене и ягоди</h3></div><strong>Цена на място</strong></div>
+          <p>Крема сирене, свежи ягоди, ягодово сладко и парченца шоколад.</p>
+          <button class="add-to-cart" type="button" disabled>Очакваме цена</button>
         </article>
         <article class="menu-card product-card drink-card hidden" data-category="drinks" data-id="coca-cola" data-name="Coca-Cola" data-price="3.00">
           <div class="drink-visual coca-cola" aria-hidden="true"><span>Coca-Cola</span></div>

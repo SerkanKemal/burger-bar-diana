@@ -139,6 +139,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--lime);outline-offse
 .menu-card p{color:var(--muted);line-height:1.6;font-size:13px;padding:0 10px 10px}
 .add-to-cart{margin-top:auto;background:var(--ink);color:#fff;border-radius:13px;padding:13px 16px;cursor:pointer;font-weight:800;transition:.25s}
 .add-to-cart:hover{background:var(--orange);transform:translateY(-2px)}
+.unavailable-card .add-to-cart:disabled{background:#aaa;cursor:not-allowed;transform:none}
 
 .cart-fab{position:fixed;right:24px;bottom:24px;z-index:80;display:flex;align-items:center;gap:12px;background:var(--ink);color:#fff;border-radius:999px;padding:11px 12px 11px 20px;box-shadow:0 15px 40px rgba(0,0,0,.22);cursor:pointer;font-weight:800}
 .cart-fab strong{display:grid;place-items:center;min-width:34px;height:34px;padding:0 8px;background:var(--lime);color:var(--ink);border-radius:50%}
