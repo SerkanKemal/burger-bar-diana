@@ -377,6 +377,11 @@ $$('.add-to-cart').forEach(button=>button.addEventListener('click',()=>{
   setTimeout(()=>button.textContent='Добави в количката',900);
 }));
 
+$$('.drink-size select').forEach(select=>select.addEventListener('change',()=>{
+  const button=select.closest('.drink-card').querySelector('.add-to-cart');
+  button.textContent=`Очакваме цена за ${select.value}`;
+}));
+
 cartItems.addEventListener('click',event=>{
   const button=event.target.closest('[data-cart-action]');
   if(!button) return;
