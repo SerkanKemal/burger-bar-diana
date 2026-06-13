@@ -377,9 +377,16 @@ $$('.add-to-cart').forEach(button=>button.addEventListener('click',()=>{
   setTimeout(()=>button.textContent='Добави в количката',900);
 }));
 
-$$('.drink-size select').forEach(select=>select.addEventListener('change',()=>{
-  const button=select.closest('.drink-card').querySelector('.add-to-cart');
-  button.textContent=`Очакваме цена за ${select.value}`;
+$$('.drink-size').forEach(group=>group.addEventListener('click',event=>{
+  const sizeButton=event.target.closest('[data-size]');
+  if(!sizeButton) return;
+  group.querySelectorAll('[data-size]').forEach(option=>{
+    const selected=option===sizeButton;
+    option.classList.toggle('active',selected);
+    option.setAttribute('aria-pressed',String(selected));
+  });
+  const addButton=group.closest('.drink-card').querySelector('.add-to-cart');
+  addButton.textContent=`Очакваме цена за ${sizeButton.dataset.size}`;
 }));
 
 cartItems.addEventListener('click',event=>{
