@@ -430,6 +430,12 @@
         <label><input type="radio" name="fulfillmentType" value="pickup" checked> Вземане от място</label>
         <label><input type="radio" name="fulfillmentType" value="delivery"> Доставка</label>
       </fieldset>
+      <fieldset class="fulfillment-options">
+        <legend>Плащане</legend>
+        <label><input type="radio" name="paymentMethod" value="cash" checked> В брой при получаване</label>
+        <label><input id="cardPaymentOption" type="radio" name="paymentMethod" value="card" disabled> С карта чрез Stripe</label>
+      </fieldset>
+      <p id="cardPaymentStatus">Проверяваме дали плащането с карта е достъпно...</p>
       <label>Желан час<input id="requestedTime" name="requestedTime" type="time" min="11:30" max="22:30" step="900"></label>
       <label id="deliveryAddressLabel" hidden>Адрес за доставка<input id="deliveryAddress" name="address" autocomplete="street-address"></label>
       <label>Име<input id="customerName" name="name" autocomplete="name" required></label>

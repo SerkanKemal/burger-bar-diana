@@ -74,6 +74,26 @@ npm run email:test
 
 За публичния Render сайт е необходима публично достъпна MySQL база. Локалната MySQL база на компютъра не е достъпна от Render. В Render добави `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` и `DB_NAME` като Environment Variables.
 
+## Тестови плащания с карта чрез Stripe
+
+Добави тестовите Stripe ключове и webhook secret като Environment Variables:
+
+```env
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+Webhook адресът за публичния сайт е:
+
+```text
+https://burger-bar-diana.onrender.com/api/stripe/webhook
+```
+
+Webhook-ът трябва да получава събитията `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed` и `checkout.session.expired`. Поръчка с карта се маркира като платена само след валидно подписано потвърждение от Stripe.
+
+Не поставяй Stripe secret key или webhook secret в HTML, JavaScript файловете или GitHub. За тестово успешно плащане използвай карта `4242 4242 4242 4242`, бъдеща дата и произволен CVC.
+
 ## Оптимизиране на изображенията
 
 Оригиналните PNG файлове се пазят като източник, а сайтът зарежда по-малките WebP версии. След добавяне или смяна на PNG снимка изпълни:

@@ -222,6 +222,8 @@ const cartTotal=$('#cartTotal');
 const orderForm=$('#orderForm');
 const orderMessage=$('#orderMessage');
 const orderHoursStatus=$('#orderHoursStatus');
+const cardPaymentOption=$('#cardPaymentOption');
+const cardPaymentStatus=$('#cardPaymentStatus');
 const deliveryAddressLabel=$('#deliveryAddressLabel');
 const deliveryAddress=$('#deliveryAddress');
 const trackOrderForm=$('#trackOrderForm');
@@ -310,6 +312,20 @@ async function loadOrderHours(){
     orderHoursStatus.classList.add('orders-closed');
   }
   updateOrderSubmitState();
+}
+
+async function loadPaymentConfig(){
+  try{
+    const response=await fetch('/api/payment-config',{cache:'no-store'});
+    const result=await response.json();
+    cardPaymentOption.disabled=!result.cardEnabled;
+    cardPaymentStatus.textContent=result.cardEnabled
+      ?'Картовите плащания са в тестов режим и не теглят реални пари.'
+      :'Плащането с карта временно не е достъпно.';
+  }catch{
+    cardPaymentOption.disabled=true;
+    cardPaymentStatus.textContent='Плащането с карта временно не е достъпно.';
+  }
 }
 
 function openCart(){
@@ -401,6 +417,7 @@ orderForm.addEventListener('submit',async event=>{
   const phone=$('#customerPhone').value.trim();
   const note=$('#orderNote').value.trim();
   const fulfillmentType=$('input[name="fulfillmentType"]:checked').value;
+  const paymentMethod=$('input[name="paymentMethod"]:checked').value;
   orderMessage.textContent='Записваме поръчката...';
   submitButton.disabled=true;
 
@@ -415,6 +432,7 @@ orderForm.addEventListener('submit',async event=>{
         phone,
         note,
         fulfillmentType,
+        paymentMethod,
         address:deliveryAddress.value.trim(),
         requestedTime:$('#requestedTime').value,
         items:cart.map(item=>({id:item.id,quantity:item.quantity}))
@@ -422,6 +440,11 @@ orderForm.addEventListener('submit',async event=>{
     });
     const result=await response.json();
     if(!response.ok) throw new Error(result.error||'Поръчката не може да бъде записана.');
+    if(result.checkoutUrl){
+      orderMessage.textContent='Пренасочваме те към защитеното плащане на Stripe...';
+      window.location.assign(result.checkoutUrl);
+      return;
+    }
 
     orderMessage.textContent=`Поръчката е записана! Номер: ${result.orderNumber}. ${result.emailQueued?'Потвърждението по имейл се изпраща.':'Имейл потвърждението не е настроено.'}`;
     $('#trackOrderNumber').value=result.orderNumber;
@@ -450,7 +473,10 @@ trackOrderForm.addEventListener('submit',async event=>{
     const result=await response.json();
     if(!response.ok) throw new Error(result.error||'Поръчката не е намерена.');
     const method=result.fulfillment_type==='delivery'?'Доставка':'Вземане от място';
-    trackOrderResult.textContent=`${statusLabels[result.status]||result.status} · ${method} · ${formatPrice(result.total,result.currency)}`;
+    const payment=result.payment_method==='card'
+      ?result.payment_status==='paid'?'Платена с карта':'Очаква плащане с карта'
+      :'Плащане в брой';
+    trackOrderResult.textContent=`${statusLabels[result.status]||result.status} · ${method} · ${payment} · ${formatPrice(result.total,result.currency)}`;
   }catch(error){
     trackOrderResult.textContent=error.message;
   }
@@ -461,7 +487,21 @@ window.addEventListener('keydown',event=>{
 });
 
 renderCart();
+const paymentResult=new URLSearchParams(window.location.search);
+if(paymentResult.get('payment')==='success'){
+  cart=[];
+  renderCart();
+  openCart();
+  orderMessage.textContent=`Плащането е прието. Поръчка: ${paymentResult.get('order')||''}.`;
+  history.replaceState({},'',window.location.pathname);
+}
+if(paymentResult.get('payment')==='cancelled'){
+  openCart();
+  orderMessage.textContent='Плащането е прекратено. Количката е запазена и можеш да опиташ отново.';
+  history.replaceState({},'',window.location.pathname);
+}
 loadOrderHours();
+loadPaymentConfig();
 setInterval(loadOrderHours,60*1000);
 
 $('#year').textContent=new Date().getFullYear();

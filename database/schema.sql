@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS orders (
   user_id BIGINT UNSIGNED NULL,
   order_number VARCHAR(24) NOT NULL UNIQUE,
   customer_name VARCHAR(100) NOT NULL,
+  customer_email VARCHAR(190) NULL,
   customer_phone VARCHAR(30) NOT NULL,
   fulfillment_type ENUM('pickup','delivery') NOT NULL,
   delivery_address VARCHAR(255) NULL,
@@ -44,11 +45,15 @@ CREATE TABLE IF NOT EXISTS orders (
   status ENUM('received','confirmed','preparing','ready','completed','cancelled') NOT NULL DEFAULT 'received',
   total DECIMAL(10,2) NOT NULL,
   currency CHAR(3) NOT NULL DEFAULT 'BGN',
+  payment_method ENUM('cash','card') NOT NULL DEFAULT 'cash',
+  payment_status ENUM('pending','paid','failed','refunded') NOT NULL DEFAULT 'pending',
+  stripe_session_id VARCHAR(255) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_orders_status_created (status, created_at),
   INDEX idx_orders_phone (customer_phone),
   INDEX idx_orders_user_created (user_id, created_at),
+  UNIQUE INDEX idx_orders_stripe_session (stripe_session_id),
   CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 

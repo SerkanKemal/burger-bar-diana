@@ -14,6 +14,7 @@ const statusLabels={
   completed:'Приключена',
   cancelled:'Отказана'
 };
+const paymentLabels={pending:'Очаква плащане',paid:'Платена',failed:'Неуспешно плащане',refunded:'Възстановена'};
 let secondsUntilRefresh=refreshIntervalSeconds;
 let isLoading=false;
 let authenticated=false;
@@ -57,6 +58,9 @@ function renderOrders(orders){
       <div class="order-meta">
         <strong>${escapeHtml(order.customer_name)}</strong><span>${escapeHtml(order.customer_phone)}</span>
         <strong>${order.fulfillment_type==='delivery'?'Доставка':'Вземане от място'}</strong><span>${formatPrice(order.total,order.currency)}</span>
+        <strong>Плащане</strong><span>${order.payment_method==='card'
+          ?`Карта · ${escapeHtml(paymentLabels[order.payment_status]||order.payment_status)}`
+          :order.payment_status==='paid'?'В брой · Платена':'В брой при получаване'}</span>
         <strong>${escapeHtml(statusLabels[order.status]||order.status)}</strong><span>${new Date(order.created_at).toLocaleString('bg-BG')}</span>
       </div>
       ${order.delivery_address?`<p><strong>Адрес:</strong> ${escapeHtml(order.delivery_address)}</p>`:''}

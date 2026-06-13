@@ -9,6 +9,7 @@ const profileMessage=document.querySelector('#profileMessage');
 const notificationCount=document.querySelector('#notificationCount');
 const adminProfileLink=document.querySelector('#adminProfileLink');
 const accountStatusLabels={received:'Получена',confirmed:'Потвърдена',preparing:'Приготвя се',ready:'Готова',completed:'Приключена',cancelled:'Отказана'};
+const accountPaymentLabels={pending:'Очаква плащане',paid:'Платена',failed:'Неуспешно плащане',refunded:'Възстановена'};
 let currentUser=null;
 
 const accountEscape=value=>String(value??'').replace(/[&<>"']/g,char=>({
@@ -83,7 +84,9 @@ async function loadProfileContent(){
   ]);
   const orders=document.querySelector('#profileOrders');
   orders.innerHTML=ordersResult.orders.length?ordersResult.orders.map(order=>`
-    <article><strong>${accountEscape(order.order_number)}</strong><span>${accountEscape(accountStatusLabels[order.status]||order.status)} · ${accountPrice(order.total,order.currency)}</span></article>
+    <article><strong>${accountEscape(order.order_number)}</strong><span>${accountEscape(accountStatusLabels[order.status]||order.status)} · ${order.payment_method==='card'
+      ?accountEscape(accountPaymentLabels[order.payment_status]||order.payment_status)
+      :order.payment_status==='paid'?'Платена в брой':'Плащане в брой при получаване'} · ${accountPrice(order.total,order.currency)}</span></article>
   `).join(''):'<p>Няма поръчки.</p>';
   const notifications=document.querySelector('#profileNotifications');
   notifications.innerHTML=notificationsResult.notifications.length?notificationsResult.notifications.map(item=>`

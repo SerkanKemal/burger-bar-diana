@@ -55,6 +55,27 @@ async function main(){
   if(!currencyColumns.length){
     await connection.query("ALTER TABLE orders ADD COLUMN currency CHAR(3) NOT NULL DEFAULT 'BGN' AFTER total");
   }
+  const [paymentColumns]=await connection.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA=? AND TABLE_NAME='orders'
+       AND COLUMN_NAME IN ('customer_email','payment_method','payment_status','stripe_session_id')`,
+    [database]
+  );
+  const paymentColumnNames=new Set(paymentColumns.map(column=>column.COLUMN_NAME));
+  if(!paymentColumnNames.has('customer_email')){
+    await connection.query('ALTER TABLE orders ADD COLUMN customer_email VARCHAR(190) NULL AFTER customer_name');
+  }
+  if(!paymentColumnNames.has('payment_method')){
+    await connection.query("ALTER TABLE orders ADD COLUMN payment_method ENUM('cash','card') NOT NULL DEFAULT 'cash' AFTER currency");
+  }
+  if(!paymentColumnNames.has('payment_status')){
+    await connection.query("ALTER TABLE orders ADD COLUMN payment_status ENUM('pending','paid','failed','refunded') NOT NULL DEFAULT 'pending' AFTER payment_method");
+    await connection.query("UPDATE orders SET payment_status=IF(status='completed','paid','pending') WHERE payment_method='cash'");
+  }
+  if(!paymentColumnNames.has('stripe_session_id')){
+    await connection.query('ALTER TABLE orders ADD COLUMN stripe_session_id VARCHAR(255) NULL AFTER payment_status');
+    await connection.query('ALTER TABLE orders ADD UNIQUE INDEX idx_orders_stripe_session (stripe_session_id)');
+  }
   await connection.end();
   console.log('MySQL database and order tables are ready.');
 }

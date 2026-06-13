@@ -1,6 +1,7 @@
 const path=require('path');
 const crypto=require('crypto');
 const express=require('express');
+const Stripe=require('stripe');
 const {rateLimit}=require('express-rate-limit');
 require('dotenv').config();
 const {pool}=require('./src/db');
@@ -19,9 +20,38 @@ const {
 const app=express();
 const port=process.env.PORT||3000;
 const publicDirectory=path.join(__dirname,'burger-bar-diana');
+const stripe=process.env.STRIPE_SECRET_KEY?new Stripe(process.env.STRIPE_SECRET_KEY):null;
 
 app.disable('x-powered-by');
 app.set('trust proxy',1);
+app.post('/api/stripe/webhook',express.raw({type:'application/json'}),async(req,res)=>{
+  if(!stripe||!process.env.STRIPE_WEBHOOK_SECRET){
+    return res.status(503).send('Stripe webhook is not configured.');
+  }
+  let event;
+  try{
+    event=stripe.webhooks.constructEvent(req.body,req.headers['stripe-signature'],process.env.STRIPE_WEBHOOK_SECRET);
+  }catch(error){
+    console.error('Invalid Stripe webhook:',error.message);
+    return res.status(400).send('Invalid webhook signature.');
+  }
+  try{
+    const session=event.data.object;
+    if(['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type)&&session.payment_status==='paid'){
+      await completeCardPayment(session);
+    }
+    if(['checkout.session.expired','checkout.session.async_payment_failed'].includes(event.type)){
+      await pool.execute(
+        "UPDATE orders SET payment_status='failed',status='cancelled' WHERE stripe_session_id=? AND payment_status='pending'",
+        [session.id]
+      );
+    }
+    return res.json({received:true});
+  }catch(error){
+    console.error('Stripe webhook processing failed:',error);
+    return res.status(500).send('Webhook processing failed.');
+  }
+});
 app.use(express.json({limit:'100kb'}));
 app.use(express.static(publicDirectory));
 app.use(optionalAuth);
@@ -42,6 +72,51 @@ function queueEmail(label,send){
       console.error(`${label} email could not be sent:`,error);
     }
   });
+}
+
+async function completeCardPayment(session){
+  const orderNumber=session.metadata?.orderNumber;
+  if(!orderNumber) throw new Error('Stripe session does not contain an order number.');
+  const [[order]]=await pool.execute(
+    `SELECT id,user_id,order_number,customer_name,customer_email,fulfillment_type,
+            delivery_address,requested_time,total,currency,payment_status,stripe_session_id
+     FROM orders WHERE order_number=? LIMIT 1`,
+    [orderNumber]
+  );
+  if(!order||order.payment_status==='paid') return;
+  if(session.id!==order.stripe_session_id||session.currency?.toUpperCase()!==order.currency||
+      session.amount_total!==Math.round(Number(order.total)*100)){
+    throw new Error(`Stripe payment details do not match order ${orderNumber}.`);
+  }
+  const [result]=await pool.execute(
+    `UPDATE orders SET payment_status='paid'
+     WHERE order_number=? AND stripe_session_id=? AND payment_status='pending'`,
+    [orderNumber,session.id]
+  );
+  if(!result.affectedRows) return;
+  const [items]=await pool.execute(
+    'SELECT product_name name,quantity,line_total lineTotal FROM order_items WHERE order_id=? ORDER BY id',
+    [order.id]
+  );
+  if(order.user_id){
+    await pool.execute(
+      'INSERT INTO notifications (user_id,order_id,message) VALUES (?,?,?)',
+      [order.user_id,order.id,`Плащането за поръчка ${orderNumber} е успешно.`]
+    );
+  }
+  if(order.customer_email&&emailConfigured){
+    queueEmail('Paid order confirmation',()=>sendOrderConfirmationEmail({
+      to:order.customer_email,
+      name:order.customer_name,
+      orderNumber,
+      total:order.total,
+      currency:order.currency,
+      items,
+      fulfillmentType:order.fulfillment_type,
+      address:order.delivery_address||'',
+      requestedTime:order.requested_time||''
+    }));
+  }
 }
 
 function createOrderNumber(){
@@ -211,7 +286,7 @@ app.patch('/api/me',requireAuth,async(req,res)=>{
 
 app.get('/api/me/orders',requireAuth,async(req,res)=>{
   const [orders]=await pool.execute(
-    `SELECT order_number,status,total,currency,fulfillment_type,delivery_address,requested_time,created_at,updated_at
+    `SELECT order_number,status,total,currency,payment_method,payment_status,fulfillment_type,delivery_address,requested_time,created_at,updated_at
      FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 50`,
     [req.user.id]
   );
@@ -239,7 +314,9 @@ app.get('/api/health',async(req,res)=>{
       status:'ok',
       database:'connected',
       email:emailConfigured?'configured':'not_configured',
-      emailProvider
+      emailProvider,
+      stripe:stripe?'configured':'not_configured',
+      stripeWebhook:process.env.STRIPE_WEBHOOK_SECRET?'configured':'not_configured'
     });
   }catch{
     return res.status(503).json({status:'error',database:'disconnected'});
@@ -251,11 +328,17 @@ app.get('/api/order-hours',(req,res)=>{
   return res.json(getOrderHoursStatus());
 });
 
+app.get('/api/payment-config',(req,res)=>{
+  res.set('Cache-Control','no-store');
+  return res.json({cardEnabled:Boolean(stripe&&process.env.STRIPE_WEBHOOK_SECRET)});
+});
+
 app.post('/api/orders',orderLimiter,async(req,res)=>{
   const name=clean(req.body.name);
   const email=clean(req.body.email).toLowerCase();
   const phone=normalizePhone(req.body.phone);
   const fulfillmentType=req.body.fulfillmentType;
+  const paymentMethod=req.body.paymentMethod;
   const address=clean(req.body.address);
   const requestedTime=clean(req.body.requestedTime);
   const note=clean(req.body.note);
@@ -267,6 +350,10 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
   if(!req.user&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:'Въведи валиден имейл за потвърждението.'});
   if(phone.length<7||phone.length>20) return res.status(400).json({error:'Въведи валиден телефон.'});
   if(!['pickup','delivery'].includes(fulfillmentType)) return res.status(400).json({error:'Избери начин на получаване.'});
+  if(!['cash','card'].includes(paymentMethod)) return res.status(400).json({error:'Избери начин на плащане.'});
+  if(paymentMethod==='card'&&(!stripe||!process.env.STRIPE_WEBHOOK_SECRET)){
+    return res.status(503).json({error:'Плащането с карта още не е настроено.'});
+  }
   if(fulfillmentType==='delivery'&&(address.length<8||address.length>255)){
     return res.status(400).json({error:'Въведи валиден адрес за доставка.'});
   }
@@ -300,9 +387,12 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
     await connection.beginTransaction();
     const [result]=await connection.execute(
       `INSERT INTO orders
-       (user_id,order_number,customer_name,customer_phone,fulfillment_type,delivery_address,requested_time,note,total,currency)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      [req.user?.id||null,orderNumber,name,phone,fulfillmentType,fulfillmentType==='delivery'?address:null,requestedTime||null,note||null,total,'EUR']
+       (user_id,order_number,customer_name,customer_email,customer_phone,fulfillment_type,delivery_address,
+        requested_time,note,total,currency,payment_method,payment_status)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [req.user?.id||null,orderNumber,name,req.user?.email||email,phone,fulfillmentType,
+        fulfillmentType==='delivery'?address:null,requestedTime||null,note||null,total,'EUR',
+        paymentMethod,'pending']
     );
     savedOrderId=result.insertId;
     for(const item of items){
@@ -313,7 +403,7 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
         [result.insertId,item.id,item.name,item.price,item.quantity,item.lineTotal]
       );
     }
-    if(req.user){
+    if(req.user&&paymentMethod==='cash'){
       await connection.execute(
         'INSERT INTO notifications (user_id,order_id,message) VALUES (?,?,?)',
         [req.user.id,savedOrderId,`Поръчка ${orderNumber} е получена.`]
@@ -323,6 +413,41 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
     connection.release();
     connection=null;
     const recipient=req.user?.email||email;
+    if(paymentMethod==='card'){
+      try{
+        const baseUrl=`${req.protocol}://${req.get('host')}`;
+        const session=await stripe.checkout.sessions.create({
+          mode:'payment',
+          locale:'bg',
+          customer_email:recipient,
+          line_items:items.map(item=>({
+            quantity:item.quantity,
+            price_data:{
+              currency:'eur',
+              unit_amount:Math.round(item.price*100),
+              product_data:{name:item.name}
+            }
+          })),
+          metadata:{orderNumber},
+          payment_intent_data:{metadata:{orderNumber}},
+          success_url:`${baseUrl}/?payment=success&order=${encodeURIComponent(orderNumber)}`,
+          cancel_url:`${baseUrl}/?payment=cancelled&order=${encodeURIComponent(orderNumber)}`
+        });
+        await pool.execute('UPDATE orders SET stripe_session_id=? WHERE id=?',[session.id,savedOrderId]);
+        return res.status(201).json({
+          orderNumber,
+          status:'received',
+          paymentStatus:'pending',
+          total,
+          currency:'EUR',
+          checkoutUrl:session.url
+        });
+      }catch(error){
+        await pool.execute("UPDATE orders SET payment_status='failed',status='cancelled' WHERE id=?",[savedOrderId]);
+        console.error('Could not create Stripe Checkout session:',error);
+        return res.status(503).json({error:'Платежната страница не може да бъде отворена в момента. Опитай отново.'});
+      }
+    }
     if(recipient&&emailConfigured){
       queueEmail('Order confirmation',()=>sendOrderConfirmationEmail({
         to:recipient,
@@ -339,6 +464,7 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
     return res.status(201).json({
       orderNumber,
       status:'received',
+      paymentStatus:'pending',
       total,
       currency:'EUR',
       emailQueued:Boolean(recipient&&emailConfigured)
@@ -357,7 +483,7 @@ app.get('/api/orders/:orderNumber',orderLimiter,async(req,res)=>{
   if(phone.length<7) return res.status(400).json({error:'Въведи телефона от поръчката.'});
   try{
     const [orders]=await pool.execute(
-      `SELECT order_number,status,total,currency,fulfillment_type,delivery_address,requested_time,created_at,updated_at
+      `SELECT order_number,status,total,currency,payment_method,payment_status,fulfillment_type,delivery_address,requested_time,created_at,updated_at
        FROM orders WHERE order_number=? AND customer_phone=? LIMIT 1`,
       [req.params.orderNumber,phone]
     );
@@ -374,7 +500,7 @@ app.get('/api/admin/orders',adminLimiter,requireAdmin,async(req,res)=>{
     const filter=buildOrderFilter(clean(req.query.filter));
     const [orders]=await pool.execute(
       `SELECT id,order_number,customer_name,customer_phone,fulfillment_type,delivery_address,
-              requested_time,note,status,total,currency,created_at,updated_at
+              requested_time,note,status,total,currency,payment_method,payment_status,created_at,updated_at
        FROM orders ${filter.where} ORDER BY created_at DESC LIMIT 500`,
       filter.values
     );
@@ -403,7 +529,8 @@ app.get('/api/admin/orders.csv',adminLimiter,requireAdmin,async(req,res)=>{
     const filter=buildOrderFilter(clean(req.query.filter));
     const [rows]=await pool.execute(
       `SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.fulfillment_type,
-              o.delivery_address,o.requested_time,o.note,o.status,o.total,o.currency,o.created_at,
+              o.delivery_address,o.requested_time,o.note,o.status,o.total,o.currency,
+              o.payment_method,o.payment_status,o.created_at,
               GROUP_CONCAT(CONCAT(oi.quantity,' x ',oi.product_name,' (',oi.line_total,' ',o.currency,')')
                 ORDER BY oi.id SEPARATOR ' | ') items
        FROM orders o
@@ -415,7 +542,7 @@ app.get('/api/admin/orders.csv',adminLimiter,requireAdmin,async(req,res)=>{
       filter.values
     );
     const statusLabels={received:'Получена',confirmed:'Потвърдена',preparing:'Приготвя се',ready:'Готова',completed:'Приключена',cancelled:'Отказана'};
-    const header=['Номер','Дата','Клиент','Телефон','Получаване','Адрес','Желан час','Статус','Продукти','Бележка','Общо','Валута'];
+    const header=['Номер','Дата','Клиент','Телефон','Получаване','Адрес','Желан час','Статус','Плащане','Платежен статус','Продукти','Бележка','Общо','Валута'];
     const lines=[header,...rows.map(order=>[
       order.order_number,
       csvDate(order.created_at),
@@ -425,6 +552,8 @@ app.get('/api/admin/orders.csv',adminLimiter,requireAdmin,async(req,res)=>{
       order.delivery_address||'',
       order.requested_time||'',
       statusLabels[order.status]||order.status,
+      order.payment_method==='card'?'Карта':'В брой',
+      order.payment_method==='cash'?(order.payment_status==='paid'?'Платена в брой':'При получаване'):order.payment_status,
       order.items||'',
       order.note||'',
       Number(order.total).toFixed(2),
@@ -447,12 +576,17 @@ app.patch('/api/admin/orders/:orderNumber',adminLimiter,requireAdmin,async(req,r
   const status=req.body.status;
   if(!orderStatuses.has(status)) return res.status(400).json({error:'Невалиден статус.'});
   try{
-    const [orders]=await pool.execute('SELECT id,user_id FROM orders WHERE order_number=? LIMIT 1',[req.params.orderNumber]);
+    const [orders]=await pool.execute('SELECT id,user_id,payment_method,payment_status FROM orders WHERE order_number=? LIMIT 1',[req.params.orderNumber]);
     if(!orders.length) return res.status(404).json({error:'Поръчката не е намерена.'});
     const order=orders[0];
+    if(order.payment_method==='card'&&order.payment_status!=='paid'&&status!=='cancelled'){
+      return res.status(409).json({error:'Поръчката не може да се обработва, преди плащането с карта да бъде потвърдено.'});
+    }
     const [result]=await pool.execute(
-      'UPDATE orders SET status=? WHERE id=?',
-      [status,order.id]
+      `UPDATE orders
+       SET status=?,payment_status=IF(payment_method='cash' AND ?='completed','paid',payment_status)
+       WHERE id=?`,
+      [status,status,order.id]
     );
     if(order.user_id){
       const labels={received:'получена',confirmed:'потвърдена',preparing:'се приготвя',ready:'е готова',completed:'е приключена',cancelled:'е отказана'};
