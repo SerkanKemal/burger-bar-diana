@@ -234,6 +234,14 @@ const orderableProducts=new Map($$('[data-id]').map(product=>[
   {name:product.dataset.name,price:Number(product.dataset.price)}
 ]));
 let acceptingOrders=false;
+const initialParams=new URLSearchParams(window.location.search);
+const testOrderToken=initialParams.get('testOrder')||sessionStorage.getItem('diana-test-order-token')||'';
+if(initialParams.has('testOrder')){
+  sessionStorage.setItem('diana-test-order-token',testOrderToken);
+  initialParams.delete('testOrder');
+  const cleanQuery=initialParams.toString();
+  history.replaceState({},'',`${window.location.pathname}${cleanQuery?`?${cleanQuery}`:''}${window.location.hash}`);
+}
 
 try{
   cart=JSON.parse(localStorage.getItem('diana-cart'))||[];
@@ -300,7 +308,10 @@ function renderCart(){
 
 async function loadOrderHours(){
   try{
-    const response=await fetch('/api/order-hours',{cache:'no-store'});
+    const response=await fetch('/api/order-hours',{
+      cache:'no-store',
+      headers:testOrderToken?{'x-test-order-token':testOrderToken}:{}
+    });
     const result=await response.json();
     acceptingOrders=Boolean(result.open);
     orderHoursStatus.textContent=result.message;
@@ -424,7 +435,10 @@ orderForm.addEventListener('submit',async event=>{
   try{
     const response=await fetch('/api/orders',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        ...(testOrderToken?{'x-test-order-token':testOrderToken}:{})
+      },
       signal:AbortSignal.timeout(30000),
       body:JSON.stringify({
         name,

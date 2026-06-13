@@ -63,6 +63,15 @@ const authLimiter=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:'draft
 const clean=value=>typeof value==='string'?value.trim():'';
 const normalizePhone=value=>clean(value).replace(/[^\d+]/g,'');
 const hashToken=token=>crypto.createHash('sha256').update(token).digest('hex');
+const isStripeTestMode=()=>Boolean(process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_'));
+const hasValidTestOrderToken=req=>{
+  const expected=process.env.TEST_ORDER_TOKEN;
+  const received=clean(req.get('x-test-order-token'));
+  const receivedBuffer=Buffer.from(received);
+  const expectedBuffer=Buffer.from(expected||'');
+  if(!expectedBuffer.length||receivedBuffer.length!==expectedBuffer.length) return false;
+  return crypto.timingSafeEqual(receivedBuffer,expectedBuffer);
+};
 
 function queueEmail(label,send){
   setImmediate(async()=>{
@@ -325,7 +334,14 @@ app.get('/api/health',async(req,res)=>{
 
 app.get('/api/order-hours',(req,res)=>{
   res.set('Cache-Control','no-store');
-  return res.json(getOrderHoursStatus());
+  const status=getOrderHoursStatus();
+  const testMode=hasValidTestOrderToken(req)&&isStripeTestMode();
+  return res.json(testMode?{
+    ...status,
+    open:true,
+    testMode:true,
+    message:'Тестов режим: разрешена е тестова поръчка с карта извън работното време.'
+  }:status);
 });
 
 app.get('/api/payment-config',(req,res)=>{
@@ -344,8 +360,9 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
   const note=clean(req.body.note);
   const requestedItems=Array.isArray(req.body.items)?req.body.items:[];
   const orderHours=getOrderHoursStatus();
+  const testOrder=hasValidTestOrderToken(req)&&isStripeTestMode()&&paymentMethod==='card';
 
-  if(!orderHours.open) return res.status(403).json({error:orderHours.message});
+  if(!orderHours.open&&!testOrder) return res.status(403).json({error:orderHours.message});
   if(name.length<2||name.length>100) return res.status(400).json({error:'Въведи валидно име.'});
   if(!req.user&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:'Въведи валиден имейл за потвърждението.'});
   if(phone.length<7||phone.length>20) return res.status(400).json({error:'Въведи валиден телефон.'});
