@@ -23,7 +23,10 @@ const transporter=smtpConfigured?nodemailer.createTransport({
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
 })[char]);
-const formatPrice=value=>`${Number(value).toFixed(2).replace('.',',')} лв.`;
+const formatPrice=(value,currency='EUR')=>new Intl.NumberFormat('bg-BG',{
+  style:'currency',
+  currency
+}).format(Number(value));
 
 function layout(title,content){
   return `<!doctype html><html lang="bg"><body style="margin:0;background:#f4f0e7;font-family:Arial,sans-serif;color:#151512">
@@ -94,19 +97,19 @@ function sendWelcomeEmail({to,name}){
   });
 }
 
-function sendOrderConfirmationEmail({to,name,orderNumber,total,items,fulfillmentType,address,requestedTime}){
-  const itemText=items.map(item=>`${item.quantity} x ${item.name} - ${formatPrice(item.lineTotal)}`).join('\n');
-  const itemRows=items.map(item=>`<tr><td style="padding:8px 0">${item.quantity} × ${escapeHtml(item.name)}</td><td style="padding:8px 0;text-align:right">${formatPrice(item.lineTotal)}</td></tr>`).join('');
+function sendOrderConfirmationEmail({to,name,orderNumber,total,currency='EUR',items,fulfillmentType,address,requestedTime}){
+  const itemText=items.map(item=>`${item.quantity} x ${item.name} - ${formatPrice(item.lineTotal,currency)}`).join('\n');
+  const itemRows=items.map(item=>`<tr><td style="padding:8px 0">${item.quantity} × ${escapeHtml(item.name)}</td><td style="padding:8px 0;text-align:right">${formatPrice(item.lineTotal,currency)}</td></tr>`).join('');
   const method=fulfillmentType==='delivery'?'Доставка':'Вземане от място';
   return sendMail({
     to,
     subject:`Поръчка ${orderNumber} е получена`,
-    text:`Здравейте, ${name}! Поръчката Ви ${orderNumber} е записана успешно.\n${itemText}\nОбщо: ${formatPrice(total)}\nПолучаване: ${method}`,
+    text:`Здравейте, ${name}! Поръчката Ви ${orderNumber} е записана успешно.\n${itemText}\nОбщо: ${formatPrice(total,currency)}\nПолучаване: ${method}`,
     html:layout('Поръчката е получена!',`
       <p style="font-size:16px;line-height:1.7">Здравейте, <strong>${escapeHtml(name)}</strong>! Благодарим Ви за поръчката.</p>
       <p style="font-size:16px"><strong>Номер:</strong> ${escapeHtml(orderNumber)}<br><strong>Получаване:</strong> ${method}${requestedTime?`<br><strong>Желан час:</strong> ${escapeHtml(requestedTime)}`:''}${address?`<br><strong>Адрес:</strong> ${escapeHtml(address)}`:''}</p>
       <table style="width:100%;border-collapse:collapse;border-top:1px solid #ddd;border-bottom:1px solid #ddd">${itemRows}</table>
-      <p style="font-size:20px;text-align:right"><strong>Общо: ${formatPrice(total)}</strong></p>
+      <p style="font-size:20px;text-align:right"><strong>Общо: ${formatPrice(total,currency)}</strong></p>
       <p style="font-size:13px;color:#706d65">Поръчката влиза в сила след потвърждение от заведението.</p>
     `)
   });

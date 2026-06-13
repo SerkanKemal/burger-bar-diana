@@ -47,6 +47,14 @@ async function main(){
   if(!roleColumns.length){
     await connection.query("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'customer' AFTER password_hash");
   }
+  const [currencyColumns]=await connection.query(
+    `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA=? AND TABLE_NAME='orders' AND COLUMN_NAME='currency'`,
+    [database]
+  );
+  if(!currencyColumns.length){
+    await connection.query("ALTER TABLE orders ADD COLUMN currency CHAR(3) NOT NULL DEFAULT 'BGN' AFTER total");
+  }
   await connection.end();
   console.log('MySQL database and order tables are ready.');
 }

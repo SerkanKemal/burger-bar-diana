@@ -22,7 +22,10 @@ let currentFilter='active';
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,char=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
 })[char]);
-const formatPrice=value=>`${Number(value).toFixed(2).replace('.',',')} лв.`;
+const formatPrice=(value,currency='BGN')=>new Intl.NumberFormat('bg-BG',{
+  style:'currency',
+  currency
+}).format(Number(value));
 
 async function request(url,options={}){
   const response=await fetch(url,{
@@ -53,13 +56,13 @@ function renderOrders(orders){
       <h2>${escapeHtml(order.order_number)}</h2>
       <div class="order-meta">
         <strong>${escapeHtml(order.customer_name)}</strong><span>${escapeHtml(order.customer_phone)}</span>
-        <strong>${order.fulfillment_type==='delivery'?'Доставка':'Вземане от място'}</strong><span>${formatPrice(order.total)}</span>
+        <strong>${order.fulfillment_type==='delivery'?'Доставка':'Вземане от място'}</strong><span>${formatPrice(order.total,order.currency)}</span>
         <strong>${escapeHtml(statusLabels[order.status]||order.status)}</strong><span>${new Date(order.created_at).toLocaleString('bg-BG')}</span>
       </div>
       ${order.delivery_address?`<p><strong>Адрес:</strong> ${escapeHtml(order.delivery_address)}</p>`:''}
       ${order.requested_time?`<p><strong>Желан час:</strong> ${escapeHtml(order.requested_time)}</p>`:''}
       ${order.note?`<p><strong>Бележка:</strong> ${escapeHtml(order.note)}</p>`:''}
-      <ul>${(order.items||[]).map(item=>`<li>${item.quantity} × ${escapeHtml(item.product_name)} · ${formatPrice(item.line_total)}</li>`).join('')}</ul>
+      <ul>${(order.items||[]).map(item=>`<li>${item.quantity} × ${escapeHtml(item.product_name)} · ${formatPrice(item.line_total,order.currency)}</li>`).join('')}</ul>
       <form class="status-form" data-order-number="${escapeHtml(order.order_number)}">
         <select>${Object.entries(statusLabels).map(([value,label])=>`<option value="${value}"${value===order.status?' selected':''}>${label}</option>`).join('')}</select>
         <button type="submit">Запази</button>

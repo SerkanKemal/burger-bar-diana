@@ -211,7 +211,7 @@ app.patch('/api/me',requireAuth,async(req,res)=>{
 
 app.get('/api/me/orders',requireAuth,async(req,res)=>{
   const [orders]=await pool.execute(
-    `SELECT order_number,status,total,fulfillment_type,delivery_address,requested_time,created_at,updated_at
+    `SELECT order_number,status,total,currency,fulfillment_type,delivery_address,requested_time,created_at,updated_at
      FROM orders WHERE user_id=? ORDER BY created_at DESC LIMIT 50`,
     [req.user.id]
   );
@@ -300,9 +300,9 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
     await connection.beginTransaction();
     const [result]=await connection.execute(
       `INSERT INTO orders
-       (user_id,order_number,customer_name,customer_phone,fulfillment_type,delivery_address,requested_time,note,total)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-      [req.user?.id||null,orderNumber,name,phone,fulfillmentType,fulfillmentType==='delivery'?address:null,requestedTime||null,note||null,total]
+       (user_id,order_number,customer_name,customer_phone,fulfillment_type,delivery_address,requested_time,note,total,currency)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      [req.user?.id||null,orderNumber,name,phone,fulfillmentType,fulfillmentType==='delivery'?address:null,requestedTime||null,note||null,total,'EUR']
     );
     savedOrderId=result.insertId;
     for(const item of items){
@@ -329,6 +329,7 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
         name,
         orderNumber,
         total,
+        currency:'EUR',
         items,
         fulfillmentType,
         address:fulfillmentType==='delivery'?address:'',
@@ -339,6 +340,7 @@ app.post('/api/orders',orderLimiter,async(req,res)=>{
       orderNumber,
       status:'received',
       total,
+      currency:'EUR',
       emailQueued:Boolean(recipient&&emailConfigured)
     });
   }catch(error){
@@ -355,7 +357,7 @@ app.get('/api/orders/:orderNumber',orderLimiter,async(req,res)=>{
   if(phone.length<7) return res.status(400).json({error:'Въведи телефона от поръчката.'});
   try{
     const [orders]=await pool.execute(
-      `SELECT order_number,status,total,fulfillment_type,delivery_address,requested_time,created_at,updated_at
+      `SELECT order_number,status,total,currency,fulfillment_type,delivery_address,requested_time,created_at,updated_at
        FROM orders WHERE order_number=? AND customer_phone=? LIMIT 1`,
       [req.params.orderNumber,phone]
     );
@@ -372,7 +374,7 @@ app.get('/api/admin/orders',adminLimiter,requireAdmin,async(req,res)=>{
     const filter=buildOrderFilter(clean(req.query.filter));
     const [orders]=await pool.execute(
       `SELECT id,order_number,customer_name,customer_phone,fulfillment_type,delivery_address,
-              requested_time,note,status,total,created_at,updated_at
+              requested_time,note,status,total,currency,created_at,updated_at
        FROM orders ${filter.where} ORDER BY created_at DESC LIMIT 500`,
       filter.values
     );
@@ -401,8 +403,8 @@ app.get('/api/admin/orders.csv',adminLimiter,requireAdmin,async(req,res)=>{
     const filter=buildOrderFilter(clean(req.query.filter));
     const [rows]=await pool.execute(
       `SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.fulfillment_type,
-              o.delivery_address,o.requested_time,o.note,o.status,o.total,o.created_at,
-              GROUP_CONCAT(CONCAT(oi.quantity,' x ',oi.product_name,' (',oi.line_total,' лв.)')
+              o.delivery_address,o.requested_time,o.note,o.status,o.total,o.currency,o.created_at,
+              GROUP_CONCAT(CONCAT(oi.quantity,' x ',oi.product_name,' (',oi.line_total,' ',o.currency,')')
                 ORDER BY oi.id SEPARATOR ' | ') items
        FROM orders o
        LEFT JOIN order_items oi ON oi.order_id=o.id
@@ -413,7 +415,7 @@ app.get('/api/admin/orders.csv',adminLimiter,requireAdmin,async(req,res)=>{
       filter.values
     );
     const statusLabels={received:'Получена',confirmed:'Потвърдена',preparing:'Приготвя се',ready:'Готова',completed:'Приключена',cancelled:'Отказана'};
-    const header=['Номер','Дата','Клиент','Телефон','Получаване','Адрес','Желан час','Статус','Продукти','Бележка','Общо (лв.)'];
+    const header=['Номер','Дата','Клиент','Телефон','Получаване','Адрес','Желан час','Статус','Продукти','Бележка','Общо','Валута'];
     const lines=[header,...rows.map(order=>[
       order.order_number,
       csvDate(order.created_at),
@@ -425,7 +427,8 @@ app.get('/api/admin/orders.csv',adminLimiter,requireAdmin,async(req,res)=>{
       statusLabels[order.status]||order.status,
       order.items||'',
       order.note||'',
-      Number(order.total).toFixed(2)
+      Number(order.total).toFixed(2),
+      order.currency
     ])].map(row=>row.map(csvCell).join(';'));
     const date=new Date().toISOString().slice(0,10);
     res.set({

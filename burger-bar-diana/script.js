@@ -227,7 +227,10 @@ const deliveryAddress=$('#deliveryAddress');
 const trackOrderForm=$('#trackOrderForm');
 const trackOrderResult=$('#trackOrderResult');
 let cart=[];
-const orderableProductIds=new Set($$('[data-id]').map(product=>product.dataset.id));
+const orderableProducts=new Map($$('[data-id]').map(product=>[
+  product.dataset.id,
+  {name:product.dataset.name,price:Number(product.dataset.price)}
+]));
 let acceptingOrders=false;
 
 try{
@@ -236,15 +239,19 @@ try{
   cart=[];
 }
 cart=Array.isArray(cart)?cart.filter(item=>
-  orderableProductIds.has(item?.id) &&
-  typeof item?.id==='string' &&
-  typeof item?.name==='string' &&
-  Number.isFinite(item?.price) &&
+  orderableProducts.has(item?.id) &&
   Number.isInteger(item?.quantity) &&
   item.quantity>0
-):[];
+).map(item=>({
+  id:item.id,
+  ...orderableProducts.get(item.id),
+  quantity:item.quantity
+})):[];
 
-const formatPrice=value=>`${value.toFixed(2).replace('.',',')} лв.`;
+const formatPrice=(value,currency='EUR')=>new Intl.NumberFormat('bg-BG',{
+  style:'currency',
+  currency
+}).format(Number(value));
 const escapeHtml=value=>String(value).replace(/[&<>"']/g,char=>({
   '&':'&amp;',
   '<':'&lt;',
@@ -443,7 +450,7 @@ trackOrderForm.addEventListener('submit',async event=>{
     const result=await response.json();
     if(!response.ok) throw new Error(result.error||'Поръчката не е намерена.');
     const method=result.fulfillment_type==='delivery'?'Доставка':'Вземане от място';
-    trackOrderResult.textContent=`${statusLabels[result.status]||result.status} · ${method} · ${formatPrice(Number(result.total))}`;
+    trackOrderResult.textContent=`${statusLabels[result.status]||result.status} · ${method} · ${formatPrice(result.total,result.currency)}`;
   }catch(error){
     trackOrderResult.textContent=error.message;
   }

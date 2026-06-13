@@ -14,7 +14,10 @@ let currentUser=null;
 const accountEscape=value=>String(value??'').replace(/[&<>"']/g,char=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
 })[char]);
-const accountPrice=value=>`${Number(value).toFixed(2).replace('.',',')} лв.`;
+const accountPrice=(value,currency='BGN')=>new Intl.NumberFormat('bg-BG',{
+  style:'currency',
+  currency
+}).format(Number(value));
 
 function openAccount(){
   accountDrawer.classList.add('open');
@@ -80,7 +83,7 @@ async function loadProfileContent(){
   ]);
   const orders=document.querySelector('#profileOrders');
   orders.innerHTML=ordersResult.orders.length?ordersResult.orders.map(order=>`
-    <article><strong>${accountEscape(order.order_number)}</strong><span>${accountEscape(accountStatusLabels[order.status]||order.status)} · ${accountPrice(order.total)}</span></article>
+    <article><strong>${accountEscape(order.order_number)}</strong><span>${accountEscape(accountStatusLabels[order.status]||order.status)} · ${accountPrice(order.total,order.currency)}</span></article>
   `).join(''):'<p>Няма поръчки.</p>';
   const notifications=document.querySelector('#profileNotifications');
   notifications.innerHTML=notificationsResult.notifications.length?notificationsResult.notifications.map(item=>`

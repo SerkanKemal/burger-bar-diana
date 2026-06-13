@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS orders (
   note VARCHAR(500) NULL,
   status ENUM('received','confirmed','preparing','ready','completed','cancelled') NOT NULL DEFAULT 'received',
   total DECIMAL(10,2) NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'BGN',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_orders_status_created (status, created_at),
